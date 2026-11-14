@@ -23,6 +23,11 @@ func _run() -> void:
 		push_error("Изменилась полная геометрия рыцаря")
 		quit(1)
 		return
+	for decoration in ["Object_4", "Object_5"]:
+		if visual.model.find_child(decoration, true, false).visible:
+			push_error("В кадре остались цветы")
+			quit(1)
+			return
 	for clip in ["Idle_Loop", "Walk_Loop", "Sprint_Loop", "Sword_Attack"]:
 		var resolved: String = visual._resolve_clip(clip)
 		if resolved.is_empty():
@@ -30,9 +35,20 @@ func _run() -> void:
 			quit(1)
 			return
 		visual.animation_player.play(resolved, 0)
-		for i in range(20):
-			visual.animation_player.advance(1.0 / 30)
+		for i in range(61):
+			visual.animation_player.seek(visual.animation_player.get_animation(resolved).length * i / 60.0, true)
+			visual.animation_player.advance(0.0)
 			visual._transfer_pose()
+			for side in ["l", "r"]:
+				for chain in [["arm_stretch", "forearm_stretch"], ["forearm_stretch", "hand"]]:
+					var a: int = visual._target_bone(chain[0] + "." + side)
+					var b: int = visual._target_bone(chain[1] + "." + side)
+					var target_direction: Vector3 = (visual.target.get_bone_global_pose(b).origin - visual.target.get_bone_global_pose(a).origin).normalized()
+					var source_direction: Vector3 = (visual.source.get_bone_global_pose(visual.pairs[b]).origin - visual.source.get_bone_global_pose(visual.pairs[a]).origin).normalized()
+					if target_direction.dot(source_direction) < 0.98:
+						push_error("Рука отклонена от исходной анимации: " + clip + " " + chain[0] + side)
+						quit(1)
+						return
 		for bone in visual.pairs:
 			var pose: Transform3D = visual.target.get_bone_global_pose(bone)
 			if not pose.is_finite():

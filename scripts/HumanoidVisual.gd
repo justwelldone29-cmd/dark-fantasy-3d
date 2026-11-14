@@ -10,6 +10,8 @@ var motion_model: Node3D
 var pairs: Dictionary = {}
 var source_rest: Dictionary = {}
 var target_rest: Dictionary = {}
+var pose_corrections: Dictionary = {}
+var grip_pose: Dictionary = {}
 var strike_remaining := 0.0
 var ready_model := false
 var hips_target := -1
@@ -21,6 +23,10 @@ func build(_enemy := false) -> void:
 	add_child(model)
 	target = _find_skeleton(model)
 	assert(target != null, "У рыцаря отсутствует Skeleton3D")
+	# Розы — отдельные декоративные меши исходного ассета, для игры они не нужны.
+	for decoration in ["Object_4", "Object_5"]:
+		var flowers := model.find_child(decoration, true, false) as Node3D
+		if flowers: flowers.hide()
 	var bounds := _bounds(model, Transform3D.IDENTITY)
 	var factor := 1.8 / maxf(bounds.size.y, 0.01)
 	model.scale = Vector3.ONE * factor
@@ -55,16 +61,25 @@ func build(_enemy := false) -> void:
 				_map(source_name, "%s%d.%s" % [finger, joint, suffix])
 	for i in range(source.get_bone_count()): source_rest[i] = source.get_bone_global_rest(i)
 	for i in range(target.get_bone_count()): target_rest[i] = target.get_bone_global_rest(i)
+	_prepare_retarget_pose()
 	hips_target = _target_bone("root.x")
 	hips_source = source.find_bone("DEF-hips")
 	base_hips_position = target.get_bone_pose_position(hips_target)
 	for name_value in animation_player.get_animation_list():
 		if name_value.ends_with("Loop") or name_value in ["Sword_Idle", "Idle_Loop"]:
 			animation_player.get_animation(name_value).loop_mode = Animation.LOOP_LINEAR
-	_ready_weapon()
+	# Сохраняем закрытую правую ладонь из готовой анимации владения мечом.
+	_play("Sword_Idle", 0.0)
+	animation_player.advance(0.0)
+	_transfer_pose()
+	for finger in ["index", "middle", "ring", "pinky", "thumb"]:
+		for joint in range(1, 4):
+			var bone := _target_bone("%s%d.r" % [finger, joint])
+			if bone >= 0: grip_pose[bone] = target.get_bone_pose_rotation(bone)
 	_play("Idle_Loop", 0.0)
 	animation_player.advance(0.0)
 	_transfer_pose()
+	_ready_weapon()
 	ready_model = true
 
 func _map(source_name: String, target_prefix: String) -> void:
@@ -78,23 +93,40 @@ func _target_bone(prefix: String) -> int:
 			return i
 	return -1
 
+func _prepare_retarget_pose() -> void:
+	# UAL создан в T-позе, а рыцарь — с опущенными руками (A-поза).
+	# Сначала совмещаем направления костей исходных поз, затем переносим движение.
+	var child_names := {
+		"shoulder": "arm_stretch", "arm_stretch": "forearm_stretch",
+		"forearm_stretch": "hand", "hand": "middle1",
+		"thigh_stretch": "leg_stretch", "leg_stretch": "foot", "foot": "toes_01"
+	}
+	for bone in pairs:
+		var source_bone: int = pairs[bone]
+		var alignment := Basis.IDENTITY
+		for side in ["l", "r"]:
+			for prefix in child_names:
+				if bone != _target_bone(prefix + "." + side): continue
+				var child := _target_bone(child_names[prefix] + "." + side)
+				if child < 0 or not pairs.has(child): continue
+				var target_direction: Vector3 = (target_rest[child].origin - target_rest[bone].origin).normalized()
+				var source_direction: Vector3 = (source_rest[pairs[child]].origin - source_rest[source_bone].origin).normalized()
+				alignment = Basis(Quaternion(target_direction, source_direction))
+		pose_corrections[bone] = (source_rest[source_bone] as Transform3D).basis.orthonormalized().inverse() * alignment * (target_rest[bone] as Transform3D).basis.orthonormalized()
+
 func _transfer_pose() -> void:
-	var target_basis := target.global_basis.orthonormalized()
-	var source_basis := source.global_basis.orthonormalized()
-	# Порядок Skeleton3D — родитель перед потомком; немаппированные twist-кости наследуют позу.
+	# Все матрицы в локальном пространстве Skeleton3D; оба рига имеют одинаковый поворот.
+	# Коррекция rest-позы рассчитана один раз, лишних мировых матриц на каждом кадре нет.
 	for i in range(target.get_bone_count()):
 		if not pairs.has(i): continue
 		var j: int = pairs[i]
-		var source_pose := source_basis * source.get_bone_global_pose(j).basis.orthonormalized()
-		var original_source := source_basis * (source_rest[j] as Transform3D).basis.orthonormalized()
-		var original_target := target_basis * (target_rest[i] as Transform3D).basis.orthonormalized()
-		var world_pose := source_pose * original_source.inverse() * original_target
-		var skeleton_pose := target_basis.inverse() * world_pose
+		var desired: Basis = source.get_bone_global_pose(j).basis.orthonormalized() * pose_corrections[i]
 		var parent := target.get_bone_parent(i)
 		var parent_basis := Basis.IDENTITY if parent < 0 else target.get_bone_global_pose(parent).basis.orthonormalized()
-		var local_pose := parent_basis.inverse() * skeleton_pose
-		var rotation_value := local_pose
-		target.set_bone_pose_rotation(i, rotation_value.orthonormalized().get_rotation_quaternion())
+		var local_pose := parent_basis.inverse() * desired
+		target.set_bone_pose_rotation(i, local_pose.orthonormalized().get_rotation_quaternion())
+	for finger in grip_pose:
+		target.set_bone_pose_rotation(finger, grip_pose[finger])
 	# Вертикальный ход таза сохраняется; горизонтальное перемещение выполняет CharacterBody3D.
 	if hips_source >= 0 and hips_target >= 0:
 		var delta_y := source.get_bone_global_pose(hips_source).origin.y - (source_rest[hips_source] as Transform3D).origin.y
@@ -109,9 +141,17 @@ func _ready_weapon() -> void:
 	var attachment := BoneAttachment3D.new()
 	attachment.bone_name = target.get_bone_name(hand)
 	target.add_child(attachment)
-	# Сохраняем исходный хват модели: при смене поз меч следует кисти.
-	attachment.transform = target.get_bone_global_pose(hand)
-	sword.reparent(attachment, true)
+	# В исходном ассете меч лежит отдельно перед героем: его мировую позицию не сохраняем.
+	# Рукоять имеет центр около Y=-0.15; помещаем эту точку в середину ладони.
+	var hand_basis := target.get_bone_global_pose(hand).basis.orthonormalized()
+	var middle := _target_bone("middle1.r")
+	var palm := Vector3(0, 0.08, 0)
+	if middle >= 0:
+		palm = (target_rest[hand] as Transform3D).affine_inverse() * (target_rest[middle] as Transform3D).origin * 0.55
+	var blade_direction := Vector3(0, -0.65, 1).normalized()
+	var sword_basis := hand_basis.inverse() * Basis(Quaternion(Vector3.DOWN, blade_direction))
+	sword.reparent(attachment, false)
+	sword.transform = Transform3D(sword_basis, palm - sword_basis * Vector3(0, -0.15, 0))
 
 func _resolve_clip(requested: String) -> String:
 	if animation_player.has_animation(requested): return requested
@@ -161,7 +201,7 @@ func _hide_meshes(node: Node) -> void:
 func _bounds(node: Node3D, parent_transform: Transform3D) -> AABB:
 	var transform_value := parent_transform * node.transform
 	var box := AABB()
-	if node is MeshInstance3D: box = transform_value * node.get_aabb()
+	if node is MeshInstance3D and node.visible: box = transform_value * node.get_aabb()
 	for child in node.get_children():
 		if child is Node3D:
 			var child_box := _bounds(child, transform_value)
