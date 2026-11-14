@@ -14,9 +14,10 @@ func attack() -> void:
 	var now := Time.get_ticks_msec()
 	if now < next_attack:
 		return
-	next_attack = now + int(cooldown * 1000)
+	var visual := get_parent().get_node("Visual")
+	if not visual.swing(): return
+	next_attack = now + int(maxf(cooldown, visual.strike_remaining) * 1000)
 	struck.emit()
-	get_parent().get_node("Visual").swing()
 	# Небольшая задержка совпадает с замахом. Список целей читается в момент удара.
 	get_tree().create_timer(0.14).timeout.connect(_hit)
 

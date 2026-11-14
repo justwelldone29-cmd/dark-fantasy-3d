@@ -5,6 +5,11 @@ const MOTIONS = preload("res://assets/animations/AnimationLibrary_Godot_Standard
 var target: Skeleton3D
 var source: Skeleton3D
 var animation_player: AnimationPlayer
+var attack_source: Skeleton3D
+var attack_player: AnimationPlayer
+var upper_body: Dictionary = {}
+var strike_length := 0.0
+var strike_weight := 0.0
 var model: Node3D
 var motion_model: Node3D
 var pairs: Dictionary = {}
@@ -80,6 +85,23 @@ func build(_enemy := false) -> void:
 	animation_player.advance(0.0)
 	_transfer_pose()
 	_ready_weapon()
+	# Отдельный источник верхнего слоя: удар больше не останавливает цикл ног.
+	var attack_model := MOTIONS.instantiate()
+	add_child(attack_model)
+	attack_model.rotation.y = PI
+	_hide_meshes(attack_model)
+	attack_source = _find_skeleton(attack_model)
+	attack_player = _find_animation(attack_model)
+	attack_player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+	attack_player.speed_scale = 2.0
+	var spine := _target_bone("spine_01.x")
+	for bone in pairs:
+		var ancestor: int = bone
+		while ancestor >= 0:
+			if ancestor == spine:
+				upper_body[bone] = true
+				break
+			ancestor = target.get_bone_parent(ancestor)
 	ready_model = true
 
 func _map(source_name: String, target_prefix: String) -> void:
@@ -112,15 +134,27 @@ func _prepare_retarget_pose() -> void:
 				var target_direction: Vector3 = (target_rest[child].origin - target_rest[bone].origin).normalized()
 				var source_direction: Vector3 = (source_rest[pairs[child]].origin - source_rest[source_bone].origin).normalized()
 				alignment = Basis(Quaternion(target_direction, source_direction))
+		# Слегка подаём ключицы вперёд: исходная A-поза отводила плечевой пояс назад.
+		if bone == _target_bone("shoulder.l"):
+			alignment = Basis(Vector3.UP, deg_to_rad(-10.0)) * alignment
+		elif bone == _target_bone("shoulder.r"):
+			alignment = Basis(Vector3.UP, deg_to_rad(10.0)) * alignment
 		pose_corrections[bone] = (source_rest[source_bone] as Transform3D).basis.orthonormalized().inverse() * alignment * (target_rest[bone] as Transform3D).basis.orthonormalized()
 
 func _transfer_pose() -> void:
 	# Все матрицы в локальном пространстве Skeleton3D; оба рига имеют одинаковый поворот.
 	# Коррекция rest-позы рассчитана один раз, лишних мировых матриц на каждом кадре нет.
+	var attack_hips_to_motion := Basis.IDENTITY
+	if strike_weight > 0.0 and attack_source:
+		attack_hips_to_motion = source.get_bone_global_pose(hips_source).basis.orthonormalized() * attack_source.get_bone_global_pose(hips_source).basis.orthonormalized().inverse()
 	for i in range(target.get_bone_count()):
 		if not pairs.has(i): continue
 		var j: int = pairs[i]
-		var desired: Basis = source.get_bone_global_pose(j).basis.orthonormalized() * pose_corrections[i]
+		var source_basis := source.get_bone_global_pose(j).basis.orthonormalized()
+		if strike_weight > 0.0 and upper_body.has(i):
+			var upper_pose := attack_hips_to_motion * attack_source.get_bone_global_pose(j).basis.orthonormalized()
+			source_basis = source_basis.slerp(upper_pose, strike_weight)
+		var desired: Basis = source_basis * pose_corrections[i]
 		var parent := target.get_bone_parent(i)
 		var parent_basis := Basis.IDENTITY if parent < 0 else target.get_bone_global_pose(parent).basis.orthonormalized()
 		var local_pose := parent_basis.inverse() * desired
@@ -169,16 +203,27 @@ func _play(clip: String, blend := 0.15) -> void:
 
 func animate_motion(delta: float, speed: float) -> void:
 	if not ready_model: return
-	strike_remaining = maxf(0, strike_remaining - delta)
-	if strike_remaining <= 0:
-		_play("Sprint_Loop" if speed > 3.4 else ("Walk_Loop" if speed > 0.15 else "Idle_Loop"))
+	var running := speed > 3.4
+	_play("Sprint_Loop" if running else ("Walk_Loop" if speed > 0.15 else "Idle_Loop"))
+	# Частота шагов следует скорости, в том числе во время замаха.
+	animation_player.speed_scale = clampf(speed / (5.5 if running else 2.0), 0.5, 1.8) if speed > 0.15 else 1.0
 	animation_player.advance(delta)
+	strike_remaining = maxf(0, strike_remaining - delta)
+	strike_weight = 0.0
+	if strike_remaining > 0.0:
+		attack_player.advance(delta)
+		var elapsed := strike_length - strike_remaining
+		strike_weight = minf(clampf(elapsed / 0.08, 0, 1), clampf(strike_remaining / 0.12, 0, 1))
 	_transfer_pose()
 
-func swing() -> void:
-	if not ready_model or strike_remaining > 0: return
-	_play("Sword_Attack", 0.08)
-	strike_remaining = animation_player.get_animation(_resolve_clip("Sword_Attack")).length
+func swing() -> bool:
+	if not ready_model or strike_remaining > 0: return false
+	attack_player.play(_resolve_clip("Sword_Attack"), 0.0)
+	attack_player.seek(0.0, true)
+	attack_player.advance(0.0)
+	strike_length = attack_player.get_animation(_resolve_clip("Sword_Attack")).length / attack_player.speed_scale
+	strike_remaining = strike_length
+	return true
 
 func _find_skeleton(node: Node) -> Skeleton3D:
 	if node is Skeleton3D: return node

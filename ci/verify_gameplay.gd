@@ -51,9 +51,9 @@ func _run() -> void:
 	combat.attack()
 	await create_timer(.20).timeout
 	check(enemy.health == 66, "Кулдаун не блокирует повторный удар")
-	await create_timer(.20).timeout
+	await create_timer(maxf(.02, player.visual.strike_remaining + .06)).timeout
 	combat.attack()
-	await create_timer(.60).timeout
+	await create_timer(maxf(.02, player.visual.strike_remaining + .06)).timeout
 	combat.attack()
 	await create_timer(.22).timeout
 	check(enemy.dead, "Враг не погиб после трёх ударов")
