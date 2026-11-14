@@ -1,0 +1,23 @@
+Модели и материалы
+
+The Forgotten Knight — dark_igorek — CC BY 4.0.
+https://sketchfab.com/3d-models/the-forgotten-knight-d14eb14d83bd4e7ba7cbe443d76a10fd
+Полная геометрия сохранена; добавлен ретаргетинг анимаций и крепление меча.
+
+Low Poly Skull — ImageParSeconde — CC BY 4.0.
+https://sketchfab.com/3d-models/low-poly-skull-f3f370aaaa524ccab93ee77b86c81ba2
+Изменены UV, материалы кости/железа и сглаживание брони. Риг и анимации сохранены.
+
+Pine trees pack — LOLIPOP — CC BY 4.0.
+https://sketchfab.com/3d-models/pine-trees-pack-lowpoly-game-ready-lods-e1e9c07b8e2e445c943fec660beefba2
+Выбраны большие и средние модели LOD0, изменён масштаб и размещение.
+Лицензия: https://creativecommons.org/licenses/by/4.0/
+
+Universal Animation Library — Quaternius — CC0.
+https://quaternius.com/packs/universalanimationlibrary.html
+Окружение Graveyard Kit — Kenney — CC0: https://kenney.nl/assets/graveyard-kit
+PBR: Castle Wall Varriation, Forrest Ground 01, Bark Brown 02 — Poly Haven — CC0.
+https://polyhaven.com
+Rock058 — ambientCG — CC0: https://ambientcg.com/view?id=Rock058
+Лицензия CC0: https://creativecommons.org/publicdomain/zero/1.0/
+Материалы кости и железа созданы локально для этого проекта.

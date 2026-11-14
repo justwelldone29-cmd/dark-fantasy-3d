@@ -1,0 +1,8 @@
+.godot/
+build/
+*.keystore
+*.jks
+export_presets.cfg
+*.apk
+__pycache__/
+*.pyc

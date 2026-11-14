@@ -1,0 +1,6 @@
+Skeleton model: ImageParSeconde, Low Poly Skull.
+https://sketchfab.com/3d-models/low-poly-skull-f3f370aaaa524ccab93ee77b86c81ba2
+https://github.com/ImageParSeconde/Animated-LowPoly-Skeleton
+License: CC BY 4.0 https://creativecommons.org/licenses/by/4.0/
+Modified: UV unwrap, locally authored aged bone/iron textures, smooth armor normals.
+Original rig and nine animation clips preserved.
