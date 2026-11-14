@@ -23,6 +23,9 @@ var bag_tab: Button
 var chest_tab: Button
 var preview: SubViewportContainer
 var categories: Dictionary = {}
+const ACCENT := Color("d7bb81")
+const WEIGHT_WIDTH := 62
+const VALUE_WIDTH := 74
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -45,7 +48,7 @@ func _ready() -> void:
 		theme_value.set_color("font_color", "Button", Color("dfdace"))
 	theme = theme_value
 	var background := ColorRect.new()
-	background.color = Color(.025, .035, .05, .97)
+	background.color = Color(.025, .024, .022, .985)
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
 	var margin := MarginContainer.new()
@@ -63,6 +66,7 @@ func _ready() -> void:
 	var close := _button("ЗАКРЫТЬ", close_menu)
 	close.custom_minimum_size.x = 150
 	header.add_child(close)
+	layout.add_child(_rule())
 	var source_tabs := HBoxContainer.new()
 	layout.add_child(source_tabs)
 	bag_tab = _button("РЮКЗАК", func(): from_chest = false; selected = ""; refresh())
@@ -84,7 +88,12 @@ func _ready() -> void:
 	list_panel.custom_minimum_size.x = 390
 	list_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_child(list_panel)
-	list_panel.add_child(_label("НАЗВАНИЕ                         ВЕС · ЦЕНА", 15))
+	# Шапка и строки используют одинаковые ширины числовых столбцов.
+	var table_header := MarginContainer.new()
+	for side in ["left", "right"]: table_header.add_theme_constant_override("margin_" + side, 12)
+	table_header.add_child(_table_cells("НАЗВАНИЕ", "ВЕС", "ЦЕНА", 15))
+	list_panel.add_child(table_header)
+	list_panel.add_child(_rule())
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -95,6 +104,8 @@ func _ready() -> void:
 	var details := VBoxContainer.new()
 	details.custom_minimum_size.x = 340
 	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var divider := VSeparator.new()
+	columns.add_child(divider)
 	columns.add_child(details)
 	preview = preload("res://scripts/ItemPreview.gd").new()
 	details.add_child(preview)
@@ -115,9 +126,58 @@ func _ready() -> void:
 	message = _label("", 17)
 	message.modulate = Color("d6b270")
 	layout.add_child(message)
+	layout.add_child(_rule())
 	summary = _label("", 18)
 	layout.add_child(summary)
 	hide()
+
+func _rule() -> HSeparator:
+	var line := HSeparator.new()
+	var style := StyleBoxLine.new()
+	style.color = Color("625640")
+	style.thickness = 1
+	line.add_theme_stylebox_override("separator", style)
+	return line
+
+func _table_cells(item_name: String, weight: String, value: String, font_size := 17) -> HBoxContainer:
+	var cells := HBoxContainer.new()
+	cells.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cells.add_theme_constant_override("separation", 10)
+	for column in range(3):
+		var cell := _label([item_name, weight, value][column], font_size)
+		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cell.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		if column == 0:
+			cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			cell.clip_text = true
+			cell.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		else:
+			cell.custom_minimum_size.x = WEIGHT_WIDTH if column == 1 else VALUE_WIDTH
+			cell.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		cells.add_child(cell)
+	return cells
+
+func _item_row(id: String, data: Dictionary, count: int, equipped: bool) -> Button:
+	var row := _button("", _select_item.bind(id))
+	row.custom_minimum_size.y = 56
+	row.tooltip_text = data.name
+	var inset := MarginContainer.new()
+	inset.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inset.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	for side in ["left", "right"]: inset.add_theme_constant_override("margin_" + side, 12)
+	row.add_child(inset)
+	var item_name := ("◆ " if equipped else "") + str(data.name) + (" ×%d" % count if count > 1 else "")
+	var cells := _table_cells(item_name, "%.1f" % data.weight, str(data.value))
+	inset.add_child(cells)
+	if id == selected:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("252017")
+		style.border_color = ACCENT.darkened(.4)
+		style.set_border_width_all(1)
+		style.border_width_left = 3
+		row.add_theme_stylebox_override("normal", style)
+		for cell in cells.get_children(): cell.modulate = ACCENT
+	return row
 
 func _label(text: String, font_size: int) -> Label:
 	var label := Label.new()
@@ -182,12 +242,7 @@ func refresh() -> void:
 	if not ids.has(selected): selected = str(ids[0]) if not ids.is_empty() else ""
 	for id in ids:
 		var data := DB.item(id)
-		var mark := "◆ " if state.equipped.values().has(id) and not from_chest else ""
-		var text := "%s%s ×%d\n%.1f вес   ·   %d монет" % [mark, data.name, source[id], data.weight, data.value]
-		var row := _button(text, _select_item.bind(str(id)))
-		row.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		row.add_theme_font_size_override("font_size", 17)
-		row.modulate = Color("e5c282") if id == selected else Color.WHITE
+		var row := _item_row(str(id), data, int(source[id]), state.equipped.values().has(id) and not from_chest)
 		rows.add_child(row)
 	if ids.is_empty(): rows.add_child(_label("Сундук пуст" if from_chest else "Здесь пока ничего нет", 19))
 	summary.text = "Здоровье %d/100    |    Урон %d    Броня %d    |    Вес %.1f / %.0f    |    Золото %d" % [player.health, state.weapon_damage(), state.armor_rating(), state.total_weight(), state.MAX_WEIGHT, state.items.get("gold", 0)]
