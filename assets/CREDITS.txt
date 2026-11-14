@@ -21,3 +21,8 @@ https://polyhaven.com
 Rock058 — ambientCG — CC0: https://ambientcg.com/view?id=Rock058
 Лицензия CC0: https://creativecommons.org/publicdomain/zero/1.0/
 Материалы кости и железа созданы локально для этого проекта.
+
+Modular Fort 01 — Rico Cilliers / Poly Haven — CC0.
+https://polyhaven.com/a/modular_fort_01
+Модули собраны в крепость; текстуры импортируются в 1K для мобильных устройств.
+Модели сундуков и небольших предметов созданы для этого проекта.

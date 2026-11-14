@@ -55,7 +55,9 @@ func take_damage(amount: int) -> void:
 	if Time.get_ticks_msec() < hurt_until:
 		return
 	hurt_until = Time.get_ticks_msec() + 550
-	health = maxi(0, health - amount)
+	var armor: int = get_node("/root/GameState").armor_rating()
+	var reduced := maxi(1, int(round(amount * (1.0 - minf(.7, armor * .008)))))
+	health = maxi(0, health - reduced)
 	health_changed.emit(health)
 	if health == 0:
 		get_tree().call_deferred("reload_current_scene")

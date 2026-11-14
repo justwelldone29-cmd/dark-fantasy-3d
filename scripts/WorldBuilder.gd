@@ -134,39 +134,20 @@ func _ready() -> void:
 	for pos in [Vector3(-2.6, 0, -12), Vector3(2.6, 0, -12)]: _torch(pos)
 
 func _fortress() -> void:
-	for x in [-7.0, 7.0]:
-		var pos := Vector3(x, 0, -21)
-		mesh_node(cone(2.35, 2.7, 7, 16), pos + Vector3.UP * 3.5, stone)
-		collider(pos + Vector3.UP * 3.5, 2.7, 7)
-		mesh_node(cone(2.65, 2.65, 0.35, 16), pos + Vector3.UP * 6.5, stone)
-		for i in range(10):
-			var angle := i * TAU / 10
-			var battlement := mesh_node(cone(0.4, 0.43, 1.1, 5), pos + Vector3(sin(angle) * 2.2, 7.2, cos(angle) * 2.2), stone)
-			battlement.rotation.y = angle
-		# Тёмные узкие оконные ниши.
-		for y in [2.8, 5.0]:
-			var window := mesh_node(cone(0.11, 0.11, 0.9, 6), pos + Vector3(0, y, 2.36), mat("1e3030"))
-			window.scale.z = 0.3
-	# Входная арка собрана из клиновидных камней, проход свободен.
-	for side in [-1, 1]:
-		for level in range(4):
-			mesh_node(cone(0.65, 0.7, 0.72, 6), Vector3(side * 2.7, 0.36 + level * 0.72, -19), stone)
-		collider(Vector3(side * 2.7, 1.4, -19), 0.65, 2.8)
-	for i in range(13):
-		var angle := i * PI / 12
-		var brick := mesh_node(cone(0.38, 0.4, 0.95, 5), Vector3(cos(angle) * 2.7, 2.8 + sin(angle) * 2.7, -19), stone)
-		brick.rotation.z = angle
+	var fortress := preload("res://scripts/Fortress.gd").new()
+	fortress.name = "Castle"
+	add_child(fortress)
 	# Камни двора и центральный алтарь.
 	for i in range(18):
 		var angle := i * TAU / 18
-		mesh_node(cone(0.7, 0.8, 0.16, 6), Vector3(sin(angle) * 4, 0.08, -25 + cos(angle) * 4), stone)
-	mesh_node(cone(0.85, 1.1, 0.5, 8), Vector3(0, 0.25, -25), stone)
+		mesh_node(cone(0.7, 0.8, 0.16, 6), Vector3(sin(angle) * 4, 0.08, -33 + cos(angle) * 4), stone)
+	mesh_node(cone(0.85, 1.1, 0.5, 8), Vector3(0, 0.25, -33), stone)
 	var crystal_mat := mat("84dccc")
 	crystal_mat.emission_enabled = true
 	crystal_mat.emission = Color("4b998f")
-	mesh_node(cone(0, 0.32, 1.4, 5), Vector3(0, 1.4, -25), crystal_mat)
+	mesh_node(cone(0, 0.32, 1.4, 5), Vector3(0, 1.4, -33), crystal_mat)
 	var beacon := OmniLight3D.new()
-	beacon.position = Vector3(0, 2, -25)
+	beacon.position = Vector3(0, 2, -33)
 	beacon.light_color = Color("77d8be")
 	beacon.omni_range = 6
 	add_child(beacon)

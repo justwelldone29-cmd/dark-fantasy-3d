@@ -9,6 +9,7 @@ func _ready() -> void:
 	for v in variants: positions.append([])
 	for i in range(100):
 		var position_value := Vector3(random.randf_range(-52, 52), 0, random.randf_range(-52, 30))
+		if absf(position_value.x) < 18 and position_value.z < -16 and position_value.z > -48: continue
 		if absf(position_value.x) < 5.5 or position_value.distance_to(Vector3(0, 0, -21)) < 12: continue
 		positions[i % variants.size()].append(position_value)
 	for i in range(variants.size()):

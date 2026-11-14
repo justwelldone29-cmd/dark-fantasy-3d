@@ -44,7 +44,7 @@ func _physics_process(delta: float) -> void:
 		if now >= next_attack:
 			next_attack = now + 1400
 			visual.swing()
-			get_tree().create_timer(0.3).timeout.connect(_attack_hit)
+			get_tree().create_timer(0.3, false).timeout.connect(_attack_hit)
 	elif not sees_player and direction.length_squared() < 0.25:
 		patrol_target = home + (Vector3(-2, 0, 0) if patrol_target.x > home.x else Vector3(2, 0, 0))
 	direction = direction.normalized()

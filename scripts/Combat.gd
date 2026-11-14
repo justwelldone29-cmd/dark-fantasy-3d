@@ -19,7 +19,7 @@ func attack() -> void:
 	next_attack = now + int(maxf(cooldown, visual.strike_remaining) * 1000)
 	struck.emit()
 	# Небольшая задержка совпадает с замахом. Список целей читается в момент удара.
-	get_tree().create_timer(0.14).timeout.connect(_hit)
+	get_tree().create_timer(0.14, false).timeout.connect(_hit)
 
 func _hit() -> void:
 	var player := get_parent() as Node3D

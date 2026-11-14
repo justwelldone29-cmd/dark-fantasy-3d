@@ -1,0 +1,7 @@
+Modular Fort 01 — Rico Cilliers / Poly Haven.
+https://polyhaven.com/a/modular_fort_01
+Creative Commons Zero 1.0 Universal (CC0).
+https://creativecommons.org/publicdomain/zero/1.0/
+Source mirror, original glTF geometry and 2K PBR maps:
+https://github.com/esengine/estella/tree/ee58fe79ac341ef9666035278c93b84d0631dc16/examples/dusk-fort/assets/models
+Changes: modules assembled into a new fortress; mobile texture import capped at 1K.

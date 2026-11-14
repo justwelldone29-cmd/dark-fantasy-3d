@@ -22,6 +22,9 @@ var ready_model := false
 var hips_target := -1
 var hips_source := -1
 var base_hips_position := Vector3.ZERO
+var sword_node: MeshInstance3D
+var sword_basis_local := Basis.IDENTITY
+var sword_palm := Vector3.ZERO
 
 func build(_enemy := false) -> void:
 	model = HERO.instantiate()
@@ -186,6 +189,9 @@ func _ready_weapon() -> void:
 	var sword_basis := hand_basis.inverse() * Basis(Quaternion(Vector3.DOWN, blade_direction))
 	sword.reparent(attachment, false)
 	sword.transform = Transform3D(sword_basis, palm - sword_basis * Vector3(0, -0.15, 0))
+	sword_node = sword as MeshInstance3D
+	sword_basis_local = sword_basis
+	sword_palm = palm
 
 func _resolve_clip(requested: String) -> String:
 	if animation_player.has_animation(requested): return requested
@@ -253,3 +259,15 @@ func _bounds(node: Node3D, parent_transform: Transform3D) -> AABB:
 			if child_box.size.length_squared() > 0:
 				box = child_box if box.size.length_squared() == 0 else box.merge(child_box)
 	return box
+
+func set_equipped_weapon(id: String) -> void:
+	if not is_instance_valid(sword_node): return
+	sword_node.visible = not id.is_empty()
+	var factor := .65 if id == "dagger" else 1.0
+	sword_node.transform = Transform3D(sword_basis_local.scaled(Vector3.ONE * factor), sword_palm - sword_basis_local * Vector3(0, -.15 * factor, 0))
+	var material := sword_node.mesh.surface_get_material(0).duplicate() as StandardMaterial3D
+	if material:
+		material.albedo_color = Color(.73, .78, .85) if id == "iron_sword" else Color(1, 1, 1)
+		material.emission_enabled = id == "frost_sword"
+		material.emission = Color(.06, .18, .25)
+		sword_node.material_override = material

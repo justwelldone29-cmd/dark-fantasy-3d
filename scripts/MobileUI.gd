@@ -5,6 +5,7 @@ signal look_dragged(delta: Vector2)
 signal jump_requested
 signal attack_requested
 signal interact_requested
+signal inventory_requested
 
 var move_finger := -1
 var look_finger := -1
@@ -15,6 +16,7 @@ var look_distance := 0.0
 var look_start := 0
 var radius := 85.0
 var credits_rect := Rect2()
+var inventory_rect := Rect2()
 var button_rects: Array[Rect2] = []
 
 func _ready() -> void:
@@ -54,6 +56,13 @@ func _layout() -> void:
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(label)
+	inventory_rect = Rect2(Vector2(screen.x - 285, 15), Vector2(145, 38))
+	var inventory_button := Button.new()
+	inventory_button.text = "РЮКЗАК"
+	inventory_button.position = inventory_rect.position
+	inventory_button.size = inventory_rect.size
+	inventory_button.pressed.connect(inventory_requested.emit)
+	add_child(inventory_button)
 	credits_rect = Rect2(Vector2(screen.x - 125, 15), Vector2(110, 38))
 	var credits := Button.new()
 	credits.text = "Авторы"
@@ -80,7 +89,7 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventScreenTouch:
 		if event.pressed:
-			if credits_rect.has_point(event.position): return
+			if credits_rect.has_point(event.position) or inventory_rect.has_point(event.position): return
 			for rect in button_rects:
 				if rect.has_point(event.position):
 					return

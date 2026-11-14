@@ -38,3 +38,12 @@ The Forgotten Knight: full 223,711 triangles, original 2K textures, no mesh simp
 Skeleton: new UVs and locally authored bone/iron materials, smooth armor, nine original animations.
 Pines: nine original LOD0 big/large/medium variants; no small trees.
 UAL animation source mirror: https://github.com/J-Ponzo/gltf-universal-animation-library
+
+
+## Update 0.5.0
+
+Modular Fort 01 — Rico Cilliers / Poly Haven, CC0.
+https://polyhaven.com/a/modular_fort_01
+Source mirror: https://github.com/esengine/estella/tree/ee58fe79ac341ef9666035278c93b84d0631dc16/examples/dusk-fort/assets/models
+Original modules assembled into a fortress. Mobile texture imports capped at 1K; source 2K maps retained.
+Chests and small inventory props are locally authored. Sword/armor previews reuse credited Forgotten Knight geometry.
