@@ -46,7 +46,14 @@ func show_item(id: String) -> void:
 	pivot.add_child(object)
 	pivot.rotation.y = -.3
 	var view: String = DB.item(id).get("view", "coin")
-	if view in ["sword", "dagger", "armor", "helmet"]:
+	if view == "armor":
+		# Комплект показывается целиком с исходным скелетом, а не тремя отдельными пластинами.
+		var suit := HERO.instantiate() as Node3D
+		for decoration in ["Object_4", "Object_5", "Object_103"]:
+			var hidden_part := suit.find_child(decoration, true, false) as Node3D
+			if hidden_part: hidden_part.hide()
+		object.add_child(suit)
+	elif view in ["sword", "dagger", "helmet"]:
 		var template := HERO.instantiate()
 		var parts := ["Object_103"] if view in ["sword", "dagger"] else (["Object_27", "Object_18", "Object_20"] if view == "armor" else ["Object_29", "Object_16"])
 		for part in parts:
@@ -87,11 +94,7 @@ func show_item(id: String) -> void:
 				_piece(ingot, Vector3.ZERO, silver)
 			_:
 				for i in range(5): _cylinder(.32, .045, Vector3(.06 * sin(i), i * .05, .04 * cos(i)), gold)
-	var box := AABB()
-	for child in object.get_children():
-		if child is MeshInstance3D:
-			var bounds: AABB = child.transform * child.get_aabb()
-			box = bounds if box.size.is_zero_approx() else box.merge(bounds)
+	var box := _preview_bounds(object, Transform3D.IDENTITY)
 	var factor := 1.9 / maxf(box.size.y, maxf(box.size.x, .1))
 	object.scale = Vector3.ONE * factor
 	object.position = -box.get_center() * factor
@@ -156,3 +159,13 @@ func _helmet(mesh: Mesh) -> ArrayMesh:
 		output.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, result)
 		output.surface_set_material(output.get_surface_count()-1, mesh.surface_get_material(surface))
 	return output
+
+func _preview_bounds(node: Node3D, parent_transform: Transform3D) -> AABB:
+	if not node.visible: return AABB()
+	var transform_value := parent_transform * node.transform
+	var result: AABB = transform_value * node.get_aabb() if node is MeshInstance3D else AABB()
+	for child in node.get_children():
+		if child is Node3D:
+			var box := _preview_bounds(child, transform_value)
+			if not box.size.is_zero_approx(): result = box if result.size.is_zero_approx() else result.merge(box)
+	return result

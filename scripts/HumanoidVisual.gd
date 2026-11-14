@@ -1,6 +1,8 @@
 extends Node3D
+signal attack_contact
 ## Полная модель рыцаря. Движения — Quaternius UAL (CC0), ретаргетинг по костям.
 const HERO = preload("res://assets/models/forgotten_knight/knight.glb")
+const ONE_HAND_SLASH = preload("res://assets/animations/kaykit/one_hand_slash.tres")
 const MOTIONS = preload("res://assets/animations/AnimationLibrary_Godot_Standard.gltf")
 var target: Skeleton3D
 var source: Skeleton3D
@@ -10,6 +12,11 @@ var attack_player: AnimationPlayer
 var upper_body: Dictionary = {}
 var strike_length := 0.0
 var strike_weight := 0.0
+var full_body_weight := 0.0
+var locomotion_weight := 0.0
+var contact_fired := false
+var equipped_weapon_id := "iron_sword"
+const CONTACT_PHASE := 0.33
 var model: Node3D
 var motion_model: Node3D
 var pairs: Dictionary = {}
@@ -96,7 +103,10 @@ func build(_enemy := false) -> void:
 	attack_source = _find_skeleton(attack_model)
 	attack_player = _find_animation(attack_model)
 	attack_player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
-	attack_player.speed_scale = 2.0
+	attack_player.speed_scale = 1.0
+	var combat_library := AnimationLibrary.new()
+	combat_library.add_animation("Slash", ONE_HAND_SLASH)
+	attack_player.add_animation_library("KnightCombat", combat_library)
 	var spine := _target_bone("spine_01.x")
 	for bone in pairs:
 		var ancestor: int = bone
@@ -147,16 +157,26 @@ func _prepare_retarget_pose() -> void:
 func _transfer_pose() -> void:
 	# Все матрицы в локальном пространстве Skeleton3D; оба рига имеют одинаковый поворот.
 	# Коррекция rest-позы рассчитана один раз, лишних мировых матриц на каждом кадре нет.
-	var attack_hips_to_motion := Basis.IDENTITY
+	var motion_hips := Basis.IDENTITY
+	var attack_hips := Basis.IDENTITY
+	var blended_hips := Basis.IDENTITY
 	if strike_weight > 0.0 and attack_source:
-		attack_hips_to_motion = source.get_bone_global_pose(hips_source).basis.orthonormalized() * attack_source.get_bone_global_pose(hips_source).basis.orthonormalized().inverse()
+		motion_hips = source.get_bone_global_pose(hips_source).basis.orthonormalized()
+		attack_hips = attack_source.get_bone_global_pose(hips_source).basis.orthonormalized()
+		blended_hips = motion_hips.slerp(attack_hips, full_body_weight)
 	for i in range(target.get_bone_count()):
 		if not pairs.has(i): continue
 		var j: int = pairs[i]
 		var source_basis := source.get_bone_global_pose(j).basis.orthonormalized()
-		if strike_weight > 0.0 and upper_body.has(i):
-			var upper_pose := attack_hips_to_motion * attack_source.get_bone_global_pose(j).basis.orthonormalized()
-			source_basis = source_basis.slerp(upper_pose, strike_weight)
+		if strike_weight > 0.0:
+			var attack_basis := attack_source.get_bone_global_pose(j).basis.orthonormalized()
+			if upper_body.has(i):
+				# Смешиваем поворот корпуса относительно таза, сохраняя его работу в стойке.
+				var base_relative := motion_hips.inverse() * source_basis
+				var attack_relative := attack_hips.inverse() * attack_basis
+				source_basis = blended_hips * base_relative.slerp(attack_relative, strike_weight)
+			else:
+				source_basis = source_basis.slerp(attack_basis, full_body_weight)
 		var desired: Basis = source_basis * pose_corrections[i]
 		var parent := target.get_bone_parent(i)
 		var parent_basis := Basis.IDENTITY if parent < 0 else target.get_bone_global_pose(parent).basis.orthonormalized()
@@ -166,10 +186,15 @@ func _transfer_pose() -> void:
 		target.set_bone_pose_rotation(finger, grip_pose[finger])
 	# Вертикальный ход таза сохраняется; горизонтальное перемещение выполняет CharacterBody3D.
 	if hips_source >= 0 and hips_target >= 0:
-		var delta_y := source.get_bone_global_pose(hips_source).origin.y - (source_rest[hips_source] as Transform3D).origin.y
+		var motion_delta := source.get_bone_global_pose(hips_source).origin - (source_rest[hips_source] as Transform3D).origin
+		var delta_position := Vector3(0, motion_delta.y, 0)
+		if full_body_weight > 0.0:
+			var attack_delta := attack_source.get_bone_global_pose(hips_source).origin - (source_rest[hips_source] as Transform3D).origin
+			delta_position = delta_position.lerp(attack_delta, full_body_weight)
 		var target_height := absf((target_rest[hips_target] as Transform3D).origin.y)
 		var source_height := maxf(absf((source_rest[hips_source] as Transform3D).origin.y), 0.01)
-		target.set_bone_pose_position(hips_target, base_hips_position + Vector3.UP * clampf(delta_y * target_height / source_height, -0.15, 0.15))
+		delta_position *= target_height / source_height
+		target.set_bone_pose_position(hips_target, base_hips_position + delta_position.clamp(Vector3(-.3, -.2, -.3), Vector3(.3, .2, .3)))
 
 func _ready_weapon() -> void:
 	var sword := model.find_child("Object_103", true, false) as Node3D
@@ -180,13 +205,23 @@ func _ready_weapon() -> void:
 	target.add_child(attachment)
 	# В исходном ассете меч лежит отдельно перед героем: его мировую позицию не сохраняем.
 	# Рукоять имеет центр около Y=-0.15; помещаем эту точку в середину ладони.
-	var hand_basis := target.get_bone_global_pose(hand).basis.orthonormalized()
 	var middle := _target_bone("middle1.r")
 	var palm := Vector3(0, 0.08, 0)
 	if middle >= 0:
 		palm = (target_rest[hand] as Transform3D).affine_inverse() * (target_rest[middle] as Transform3D).origin * 0.55
-	var blade_direction := Vector3(0, -0.65, 1).normalized()
-	var sword_basis := hand_basis.inverse() * Basis(Quaternion(Vector3.DOWN, blade_direction))
+	# Продольная ось рукояти проходит поперёк сжатой ладони, к большому пальцу.
+	# Это направление берётся из самой модели, а не подбирается по мировой оси камеры.
+	var index := _target_bone("index1.r")
+	var pinky := _target_bone("pinky1.r")
+	var hand_rest: Transform3D = target_rest[hand]
+	var thumb_axis: Vector3 = (hand_rest.basis.inverse() * (target_rest[index].origin - target_rest[pinky].origin)).normalized()
+	var finger_axis: Vector3 = (hand_rest.basis.inverse() * (target_rest[middle].origin - hand_rest.origin)).normalized()
+	var width_axis := (finger_axis - thumb_axis * finger_axis.dot(thumb_axis)).normalized()
+	var length_axis := -thumb_axis
+	var normal_axis := width_axis.cross(length_axis).normalized()
+	width_axis = length_axis.cross(normal_axis).normalized()
+	var sword_basis := Basis(width_axis, length_axis, normal_axis)
+
 	sword.reparent(attachment, false)
 	sword.transform = Transform3D(sword_basis, palm - sword_basis * Vector3(0, -0.15, 0))
 	sword_node = sword as MeshInstance3D
@@ -210,24 +245,33 @@ func _play(clip: String, blend := 0.15) -> void:
 func animate_motion(delta: float, speed: float) -> void:
 	if not ready_model: return
 	var running := speed > 3.4
-	_play("Sprint_Loop" if running else ("Walk_Loop" if speed > 0.15 else "Idle_Loop"))
+	_play("Sprint_Loop" if running else ("Walk_Loop" if speed > 0.15 else ("Sword_Idle" if not equipped_weapon_id.is_empty() else "Idle_Loop")))
 	# Частота шагов следует скорости, в том числе во время замаха.
 	animation_player.speed_scale = clampf(speed / (5.5 if running else 2.0), 0.5, 1.8) if speed > 0.15 else 1.0
 	animation_player.advance(delta)
+	locomotion_weight = 1.0 if speed > .15 else move_toward(locomotion_weight, 0.0, delta * 8)
+	var was_striking := strike_remaining > 0.0
 	strike_remaining = maxf(0, strike_remaining - delta)
 	strike_weight = 0.0
-	if strike_remaining > 0.0:
+	if was_striking:
 		attack_player.advance(delta)
 		var elapsed := strike_length - strike_remaining
-		strike_weight = minf(clampf(elapsed / 0.08, 0, 1), clampf(strike_remaining / 0.12, 0, 1))
+		strike_weight = minf(smoothstep(0.0, .12, elapsed), smoothstep(0.0, .20, strike_remaining))
+	full_body_weight = strike_weight * (1.0 - locomotion_weight)
 	_transfer_pose()
+	# Один контакт за взмах, в фазе прохождения клинка, а не по отдельному таймеру.
+	if was_striking and not contact_fired and strike_length - strike_remaining >= strike_length * CONTACT_PHASE:
+		contact_fired = true
+		attack_contact.emit()
 
 func swing() -> bool:
 	if not ready_model or strike_remaining > 0: return false
-	attack_player.play(_resolve_clip("Sword_Attack"), 0.0)
+	var clip := "KnightCombat/Slash" if not equipped_weapon_id.is_empty() else _resolve_clip("Punch_Jab")
+	attack_player.play(clip, 0.0)
 	attack_player.seek(0.0, true)
 	attack_player.advance(0.0)
-	strike_length = attack_player.get_animation(_resolve_clip("Sword_Attack")).length / attack_player.speed_scale
+	strike_length = attack_player.get_animation(clip).length / attack_player.speed_scale
+	contact_fired = false
 	strike_remaining = strike_length
 	return true
 
@@ -262,6 +306,12 @@ func _bounds(node: Node3D, parent_transform: Transform3D) -> AABB:
 
 func set_equipped_weapon(id: String) -> void:
 	if not is_instance_valid(sword_node): return
+	if id != equipped_weapon_id:
+		strike_remaining = 0.0
+		strike_weight = 0.0
+		full_body_weight = 0.0
+		contact_fired = true
+	equipped_weapon_id = id
 	sword_node.visible = not id.is_empty()
 	var factor := .65 if id == "dagger" else 1.0
 	sword_node.transform = Transform3D(sword_basis_local.scaled(Vector3.ONE * factor), sword_palm - sword_basis_local * Vector3(0, -.15 * factor, 0))

@@ -23,6 +23,15 @@ func _run() -> void:
 		push_error("Изменилась полная геометрия рыцаря")
 		quit(1)
 		return
+	var hand: int = visual._target_bone("hand.r")
+	var index: int = visual._target_bone("index1.r")
+	var pinky: int = visual._target_bone("pinky1.r")
+	var grip_axis: Vector3 = (visual.target_rest[hand].basis.inverse() * (visual.target_rest[index].origin - visual.target_rest[pinky].origin)).normalized()
+	if grip_axis.dot(-visual.sword_basis_local.y) < .99:
+		push_error("Клинок не совпадает с осью хвата")
+		quit(1)
+		return
+	print("ANATOMICAL_SWORD_GRIP_OK")
 	for decoration in ["Object_4", "Object_5"]:
 		if visual.model.find_child(decoration, true, false).visible:
 			push_error("В кадре остались цветы")

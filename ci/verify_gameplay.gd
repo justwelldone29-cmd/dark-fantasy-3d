@@ -46,7 +46,7 @@ func _run() -> void:
 	for i in range(5): await physics_frame
 	var combat := player.get_node("Combat")
 	combat.attack()
-	await create_timer(.22).timeout
+	await create_timer(player.visual.strike_length * player.visual.CONTACT_PHASE + .08).timeout
 	check(enemy.health == 66, "Первый удар не нанёс ровно 34 урона")
 	combat.attack()
 	await create_timer(.20).timeout
@@ -55,7 +55,7 @@ func _run() -> void:
 	combat.attack()
 	await create_timer(maxf(.02, player.visual.strike_remaining + .06)).timeout
 	combat.attack()
-	await create_timer(.22).timeout
+	await create_timer(player.visual.strike_length * player.visual.CONTACT_PHASE + .08).timeout
 	check(enemy.dead, "Враг не погиб после трёх ударов")
 	check(enemy.visual.animator.current_animation == "death", "Смерть не использует анимацию рига")
 	check(enemy.get_node("CollisionShape3D").disabled, "Коллизия погибшего врага осталась включена")

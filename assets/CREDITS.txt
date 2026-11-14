@@ -26,3 +26,7 @@ Modular Fort 01 — Rico Cilliers / Poly Haven — CC0.
 https://polyhaven.com/a/modular_fort_01
 Модули собраны в крепость; текстуры импортируются в 1K для мобильных устройств.
 Модели сундуков и небольших предметов созданы для этого проекта.
+
+Одноручный удар: KayKit Character Animations — Kay Lousberg — CC0.
+https://kaylousberg.itch.io/kaykit-character-animations
+Клип перенесён на риг рыцаря через UAL и запечён в отдельную анимацию.

@@ -9,6 +9,7 @@ func _ready() -> void:
 	collision_layer = 0
 	collision_mask = 4
 	monitorable = false
+	get_parent().get_node("Visual").attack_contact.connect(_hit)
 
 func attack() -> void:
 	var now := Time.get_ticks_msec()
@@ -18,8 +19,7 @@ func attack() -> void:
 	if not visual.swing(): return
 	next_attack = now + int(maxf(cooldown, visual.strike_remaining) * 1000)
 	struck.emit()
-	# Небольшая задержка совпадает с замахом. Список целей читается в момент удара.
-	get_tree().create_timer(0.14, false).timeout.connect(_hit)
+	# Контакт придёт из текущей фазы анимации через сигнал attack_contact.
 
 func _hit() -> void:
 	var player := get_parent() as Node3D
