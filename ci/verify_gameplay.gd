@@ -42,7 +42,7 @@ func _run() -> void:
 	check(enemy.visual.animator.has_animation("death") and enemy.visual.animator.has_animation("attack1"), "Не импортированы боевые анимации")
 	player.position = Vector3(0, .91, 5)
 	player.visual.rotation.y = 0
-	enemy.position = Vector3(0, .91, 3.6)
+	enemy.position = Vector3(.4, .91, 4.2)
 	for i in range(5): await physics_frame
 	var combat := player.get_node("Combat")
 	combat.attack()
@@ -59,5 +59,6 @@ func _run() -> void:
 	check(enemy.dead, "Враг не погиб после трёх ударов")
 	check(enemy.visual.animator.current_animation == "death", "Смерть не использует анимацию рига")
 	check(enemy.get_node("CollisionShape3D").disabled, "Коллизия погибшего врага осталась включена")
-	print("COMBAT_DAMAGE_COOLDOWN_DEATH_OK")
+	await create_timer(.4).timeout
+	if not failed: print("COMBAT_DAMAGE_COOLDOWN_DEATH_OK")
 	quit(1 if failed else 0)

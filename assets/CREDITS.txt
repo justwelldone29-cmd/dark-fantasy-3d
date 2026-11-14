@@ -30,3 +30,5 @@ https://polyhaven.com/a/modular_fort_01
 Одноручный удар: KayKit Character Animations — Kay Lousberg — CC0.
 https://kaylousberg.itch.io/kaykit-character-animations
 Клип перенесён на риг рыцаря через UAL и запечён в отдельную анимацию.
+
+Sword impact audio: original procedural synthesis for this project, CC0 1.0.

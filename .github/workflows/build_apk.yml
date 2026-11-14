@@ -88,6 +88,7 @@ jobs:
           godot --headless --path . --script ci/verify_gameplay.gd
           godot --headless --path . --script ci/verify_attack_movement.gd
           godot --headless --path . --script ci/verify_strike_timing.gd
+          godot --headless --path . --script ci/verify_sword_effects.gd
           godot --headless --path . --script ci/verify_inventory.gd
           if [ "$RELEASE_BUILD" = "true" ]; then
             godot --headless --path . --export-release Android build/game.apk

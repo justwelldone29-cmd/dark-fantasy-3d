@@ -228,6 +228,18 @@ func _ready_weapon() -> void:
 	sword_basis_local = sword_basis
 	sword_palm = palm
 
+func get_blade_segment() -> PackedVector3Array:
+	if not ready_model or not is_instance_valid(sword_node): return PackedVector3Array()
+	# Читаем кость напрямую: BoneAttachment может обновиться позднее физики.
+	var hand := _target_bone("hand.r")
+	var hand_transform := target.global_transform * target.get_bone_global_pose(hand)
+	if equipped_weapon_id.is_empty():
+		var fist := hand_transform * sword_palm
+		return PackedVector3Array([fist, fist + Vector3.UP * .03])
+	var weapon_transform := hand_transform * sword_node.transform
+	var bounds := sword_node.mesh.get_aabb()
+	return PackedVector3Array([weapon_transform * Vector3(0, -.32, 0), weapon_transform * Vector3(0, bounds.position.y, 0)])
+
 func _resolve_clip(requested: String) -> String:
 	if animation_player.has_animation(requested): return requested
 	# Godot распознаёт суффикс _Loop и удаляет его при импорте glTF.

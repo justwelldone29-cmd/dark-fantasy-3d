@@ -1,0 +1,3 @@
+sword_impact.wav — original procedural synthesis (seeded noise and decaying sine partials).
+Dedicated to the public domain under CC0 1.0.
+https://creativecommons.org/publicdomain/zero/1.0/

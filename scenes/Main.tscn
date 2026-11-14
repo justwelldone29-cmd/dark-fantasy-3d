@@ -9,13 +9,12 @@
 [ext_resource type="Script" path="res://scripts/ImportedEnemy.gd" id="9"]
 [ext_resource type="Script" path="res://scripts/HumanoidVisual.gd" id="10"]
 [ext_resource type="Script" path="res://scripts/PineForest.gd" id="11"]
+[ext_resource type="Script" path="res://scripts/CameraShake.gd" id="12"]
 [sub_resource type="BoxShape3D" id="GroundShape"]
 size = Vector3(180, 1, 180)
 [sub_resource type="CapsuleShape3D" id="BodyShape"]
 radius = 0.3
 height = 1.8
-[sub_resource type="SphereShape3D" id="SwordShape"]
-radius = 2.2
 [sub_resource type="SphereShape3D" id="CameraShape"]
 radius = 0.2
 [sub_resource type="ProceduralSkyMaterial" id="SkyMaterial"]
@@ -83,12 +82,9 @@ current = true
 fov = 65.0
 near = 0.08
 far = 160.0
-[node name="Combat" type="Area3D" parent="Player"]
-collision_layer = 0
-collision_mask = 4
+script = ExtResource("12")
+[node name="Combat" type="Node3D" parent="Player"]
 script = ExtResource("5")
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/Combat"]
-shape = SubResource("SwordShape")
 [node name="Enemy" type="CharacterBody3D" parent="."]
 position = Vector3(-1, 0.91, -7)
 collision_layer = 4
