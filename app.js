@@ -13,7 +13,14 @@ function loadState() {
 }
 const saved = loadState();
 const completed = Array.isArray(saved.completed) ? saved.completed : [];
+const savedMistakes = Array.isArray(saved.mistakes) ? saved.mistakes : [];
+const validMistakes = savedMistakes.filter(key => {
+  if (typeof key !== 'string' || !/^\d:\d:(listen|mari|translate)$/.test(key)) return false;
+  const [group, index] = key.split(':').map(Number);
+  return Boolean(vocab[group] && vocab[group][index]);
+});
 const state = {
+  mistakes: [...new Set(validMistakes)],
   ...defaultState,
   name: typeof saved.name === 'string' ? saved.name.slice(0, 26) : '',
   completed: [...new Set(completed.filter(id => Number.isInteger(id) && id >= 0 && id < lessons.length))],
@@ -26,6 +33,7 @@ const dateKey = d => [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0')
 const today = () => dateKey(new Date());
 let current = 0, qIndex = 0, selected = -1, checked = false, correct = 0, questions = [], hearts = 5;
 let activePage = 'home';
+let reviewing = false;
 let activeAudio = null;
 
 function persist() {
@@ -33,14 +41,174 @@ function persist() {
 }
 function updateStats(){$('statXp').textContent=state.xp;$('statStreak').textContent=state.streak;$('statHearts').textContent=5;$('welcomeName').textContent=state.name||'друг';}
 function go(id){if(id!=='quiz')stopAudio();activePage=id;['home','quiz','finish','themes','profile'].forEach(v=>$(v).classList.toggle('hide',v!==id));$('nav').classList.toggle('hide',id==='quiz'||id==='finish');$('header').classList.toggle('hide',id==='quiz'||id==='finish');document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id==='home')renderMap();if(id==='themes')renderThemes();if(id==='profile')renderProfile();window.scrollTo(0,0)}
-function renderMap(){updateStats();const done=new Set(state.completed),next=lessons.findIndex(v=>!done.has(v.id));$('mapUnits').innerHTML='';for(let g=0;g<groups.length;g++){const group=groups[g],n=Array.from({length:10},(_,k)=>g*10+k).filter(id=>done.has(id)).length,div=document.createElement('div');div.innerHTML=`<div class="unit"><div style="flex:1"><div class="eyebrow">МОДУЛЬ ${g+1}, РАЗДЕЛ ${g+1}</div><h1>${group[0]}</h1><p>${n} ИЗ 10 УРОКОВ</p><div class="track"><span style="width:${n*10}%"></span></div></div><span class="book">${group[1]}</span></div>`;const trialButton=document.createElement('button');trialButton.type='button';trialButton.className='trialButton';trialButton.textContent='Пробный урок';trialButton.setAttribute('aria-label','Пробный урок: '+group[0]);trialButton.onclick=()=>startTrial(g);div.querySelector('.unit > div').appendChild(trialButton);const path=document.createElement('div');path.className='path';for(let k=0;k<10;k++){const id=g*10+k,doneLesson=done.has(id),unlocked=doneLesson||id===next,wrap=document.createElement('div'),button=document.createElement('button'),shift=Math.round(Math.sin(k*1.3+.4)*75);wrap.className='nodeRow';wrap.style.setProperty('--shift',shift+'px');button.className='node '+(doneLesson?'done':unlocked?'open':k===7?'chest':'');button.style.setProperty('--shift',shift+'px');button.disabled=!unlocked;button.textContent=doneLesson?'★':unlocked?(k%4===0?'★':'📖'):k===7?'🎁':'★';button.setAttribute('aria-label',`Урок ${id+1}${unlocked?'':', заблокирован'}`);button.onclick=()=>start(id);wrap.appendChild(button);if(unlocked&&!doneLesson){const label=document.createElement('span');label.className='bubble';label.textContent='УРОК '+(id+1);wrap.appendChild(label)}if(doneLesson){const label=document.createElement('span');label.className='nodeCaption';label.textContent='ПРОЙДЕНО';wrap.appendChild(label)}path.appendChild(wrap)}div.appendChild(path);$('mapUnits').appendChild(div)}}
+function renderMap(){updateStats();updateReviewButtons();const done=new Set(state.completed),next=lessons.findIndex(v=>!done.has(v.id));$('mapUnits').innerHTML='';for(let g=0;g<groups.length;g++){const group=groups[g],n=Array.from({length:10},(_,k)=>g*10+k).filter(id=>done.has(id)).length,div=document.createElement('div');div.innerHTML=`<div class="unit"><div style="flex:1"><div class="eyebrow">МОДУЛЬ ${g+1}, РАЗДЕЛ ${g+1}</div><h1>${group[0]}</h1><p>${n} ИЗ 10 УРОКОВ</p><div class="track"><span style="width:${n*10}%"></span></div></div><span class="book">${group[1]}</span></div>`;const trialButton=document.createElement('button');trialButton.type='button';trialButton.className='trialButton';trialButton.textContent='Пробный урок';trialButton.setAttribute('aria-label','Пробный урок: '+group[0]);trialButton.onclick=()=>startTrial(g);div.querySelector('.unit > div').appendChild(trialButton);const path=document.createElement('div');path.className='path';for(let k=0;k<10;k++){const id=g*10+k,doneLesson=done.has(id),unlocked=doneLesson||id===next,wrap=document.createElement('div'),button=document.createElement('button'),shift=Math.round(Math.sin(k*1.3+.4)*75);wrap.className='nodeRow';wrap.style.setProperty('--shift',shift+'px');button.className='node '+(doneLesson?'done':unlocked?'open':k===7?'chest':'');button.style.setProperty('--shift',shift+'px');button.disabled=!unlocked;button.textContent=doneLesson?'★':unlocked?(k%4===0?'★':'📖'):k===7?'🎁':'★';button.setAttribute('aria-label',`Урок ${id+1}${unlocked?'':', заблокирован'}`);button.onclick=()=>start(id);wrap.appendChild(button);if(unlocked&&!doneLesson){const label=document.createElement('span');label.className='bubble';label.textContent='УРОК '+(id+1);wrap.appendChild(label)}if(doneLesson){const label=document.createElement('span');label.className='nodeCaption';label.textContent='ПРОЙДЕНО';wrap.appendChild(label)}path.appendChild(wrap)}div.appendChild(path);$('mapUnits').appendChild(div)}}
 function renderThemes(){$('unitsOverview').innerHTML='';groups.forEach((g,i)=>{const b=document.createElement('button');b.className='miniUnit';let count=state.completed.filter(n=>Math.floor(n/10)===i).length;b.innerHTML=`<span>${g[1]}</span>${g[0]}<small>${count}/10 уроков</small>`;b.onclick=()=>{go('home');document.querySelectorAll('.unit')[i].scrollIntoView({block:'start',behavior:'smooth'})};$('unitsOverview').appendChild(b)})}
 function renderProfile(){$('profileName').textContent=state.name||'Гость';$('nameInput').value=state.name||'';$('profileXp').textContent=state.xp;$('profileCount').textContent=state.completed.length;$('profileStreak').textContent=state.streak;}
-function questionsFor(id){const g=Math.floor(id/10),round=id%10,items=vocab[g];return Array.from({length:5},(_,k)=>{let index=(round*3+k)%items.length,pair=items[index],reverse=(k+round)%2===1,correctText=reverse?pair[0]:pair[1],d=items.filter((_,j)=>j!==index).map(x=>reverse?x[0]:x[1]);const choices=[correctText,d[(index+k)%d.length],d[(index+k+2)%d.length],d[(index+k+4)%d.length]];const unique=[...new Set(choices)];for(let a=unique.length-1;a>0;a--){let b=(id*13+k*7+a*3)%(a+1);[unique[a],unique[b]]=[unique[b],unique[a]]}return{word:pair[0],question:reverse?'Как по-горномарийски сказать «'+pair[1]+'»?':'Выбери перевод слова «'+pair[0]+'»',answers:unique,correct:unique.indexOf(correctText),type:reverse?'ВЫБЕРИ ГОРНОМАРИЙСКОЕ СЛОВО':'ПЕРЕВЕДИ СЛОВО'}})}
-function start(id){trial=null;$('quizHearts').parentElement.classList.remove('hide');current=id;questions=questionsFor(id);qIndex=0;correct=0;hearts=5;question();go('quiz')}
-function question(){stopAudio();selected=-1;checked=false;const q=questions[qIndex];$('speechStatus').textContent='Горномарийская озвучка';$('quizBar').style.width=(100*qIndex/questions.length)+'%';$('quizHearts').textContent=hearts;$('quizType').textContent=q.type;$('question').textContent=q.question;$('feedback').textContent='';$('feedback').style.background='';$('answers').textContent='';q.answers.forEach((a,i)=>{const b=document.createElement('button');b.className='answer';b.textContent=a;b.onclick=()=>{if(checked)return;selected=i;[...$('answers').children].forEach((node,j)=>node.classList.toggle('sel',j===selected));$('check').disabled=false};$('answers').appendChild(b)});$('check').disabled=true;$('check').textContent='ПРОВЕРИТЬ'}
-function advance(){if(!checked){if(selected<0)return;checked=true;const q=questions[qIndex],ok=selected===q.correct;if(ok)correct++;else hearts=Math.max(0,hearts-1);$('quizHearts').textContent=hearts;[...$('answers').children].forEach((b,i)=>{b.classList.toggle('good',i===q.correct);b.classList.toggle('bad',i===selected&&!ok);b.disabled=true});$('feedback').textContent=ok?'✅ Правильно!':'💡 Верный ответ: '+q.answers[q.correct];$('feedback').style.background=ok?'#274b29':'#4a3530';$('check').textContent='ДАЛЕЕ';return}qIndex++;if(qIndex<5&&hearts>0){question();return}finish()}
-function finish(){$('lessonArt').src='lesson-cards/lesson-'+String(current+1).padStart(3,'0')+'.jpg';const win=correct>=4&&qIndex>=5;if(win&&!state.completed.includes(current))state.completed.push(current);const points=correct*10;state.xp+=points;const t=today();if(state.lastDay!==t){const d=new Date();d.setDate(d.getDate()-1);state.streak=(state.lastDay===dateKey(d))?state.streak+1:1;state.lastDay=t}persist();$('finishTitle').textContent=win?'Молодец! 🎉':'Попробуй ещё!';$('finishText').textContent=win?'Ты прошёл урок '+(current+1)+'. Продолжай в том же духе!':'Чтобы открыть следующий урок, ответь правильно минимум на 4 из 5 вопросов.';$('pointsEarned').textContent='+'+points;$('correctAnswers').textContent=correct+'/5';go('finish')}
+function makeQuestion(group, index, mode, seed) {
+  const items = vocab[group];
+  const [word, translation] = items[index];
+  const reverse = mode === 'mari';
+  const listening = mode === 'listen';
+  const answer = reverse ? word : translation;
+  const distractors = items
+    .filter((_, position) => position !== index)
+    .map(pair => pair[reverse ? 0 : 1]);
+  const offset = seed % distractors.length;
+  const answers = [...new Set([
+    answer,
+    ...[0, 2, 4].map(step => distractors[(offset + step) % distractors.length])
+  ])];
+  for (let position = answers.length - 1; position > 0; position--) {
+    const swap = (seed * 13 + position * 3) % (position + 1);
+    [answers[position], answers[swap]] = [answers[swap], answers[position]];
+  }
+  return {
+    key: [group, index, mode].join(':'),
+    word, listening, answers,
+    correct: answers.indexOf(answer),
+    question: listening ? 'Послушай и выбери перевод' : reverse
+      ? 'Как по-горномарийски сказать «' + translation + '»?'
+      : 'Выбери перевод слова «' + word + '»',
+    type: listening ? 'АУДИРОВАНИЕ' : reverse ? 'ВЫБЕРИ ГОРНОМАРИЙСКОЕ СЛОВО' : 'ПЕРЕВЕДИ СЛОВО'
+  };
+}
+
+function questionsFor(id) {
+  const {group, round} = lessons[id];
+  return Array.from({length: 5}, (_, step) => {
+    const index = (round * 3 + step) % vocab[group].length;
+    const mode = step === 2 || step === 4 ? 'listen' : (step + round) % 2 === 1 ? 'mari' : 'translate';
+    return makeQuestion(group, index, mode, id * 5 + step);
+  });
+}
+
+function updateReviewButtons() {
+  const count = state.mistakes.length;
+  $('mistakeSummary').textContent = count ? 'Заданий для повторения: ' + count : 'Здесь появятся задания, в которых ты ошибся.';
+  $('startReview').disabled = count === 0;
+  $('reviewFromFinish').classList.toggle('hide', count === 0);
+}
+
+function startQuiz(items, isReview) {
+  trial = null;
+  reviewing = isReview;
+  $('quizHearts').parentElement.classList.toggle('hide', reviewing);
+  questions = items;
+  qIndex = 0;
+  correct = 0;
+  hearts = 5;
+  question();
+  go('quiz');
+}
+
+function start(id) {
+  current = id;
+  startQuiz(questionsFor(id), false);
+}
+
+function startReview() {
+  const items = state.mistakes.slice(0, 10).map((key, seed) => {
+    const [group, index, mode] = key.split(':');
+    return makeQuestion(Number(group), Number(index), mode, seed + 1);
+  });
+  if (items.length) startQuiz(items, true);
+}
+
+function question() {
+  stopAudio();
+  selected = -1;
+  checked = false;
+  const q = questions[qIndex];
+  if (q.listening) $('speechStatus').textContent = 'Нажми 🔊, чтобы услышать слово.';
+  $('quizBar').style.width = (100 * qIndex / questions.length) + '%';
+  $('quizHearts').textContent = hearts;
+  $('quizType').textContent = reviewing ? 'РАБОТА НАД ОШИБКАМИ · ' + q.type : q.type;
+  $('question').textContent = q.question;
+  $('feedback').textContent = '';
+  $('feedback').style.background = '';
+  $('answers').textContent = '';
+  q.answers.forEach((answer, index) => {
+    const button = document.createElement('button');
+    button.className = 'answer';
+    button.textContent = answer;
+    button.onclick = () => {
+      if (checked) return;
+      selected = index;
+      [...$('answers').children].forEach((node, position) => node.classList.toggle('sel', position === selected));
+      $('check').disabled = false;
+    };
+    $('answers').appendChild(button);
+  });
+  $('check').disabled = true;
+  $('check').textContent = 'ПРОВЕРИТЬ';
+}
+
+function advance() {
+  if (checked) {
+    qIndex++;
+    if (qIndex < questions.length && (reviewing || hearts > 0)) question();
+    else finish();
+    return;
+  }
+  if (selected < 0) return;
+  checked = true;
+  const q = questions[qIndex];
+  const ok = selected === q.correct;
+  if (ok) {
+    correct++;
+    if (reviewing) state.mistakes = state.mistakes.filter(key => key !== q.key);
+  } else {
+    if (!reviewing) hearts = Math.max(0, hearts - 1);
+    // Rotate missed review items to give the remaining queue a turn.
+    state.mistakes = state.mistakes.filter(key => key !== q.key);
+    state.mistakes.push(q.key);
+  }
+  persist();
+  $('quizHearts').textContent = hearts;
+  [...$('answers').children].forEach((button, index) => {
+    button.classList.toggle('good', index === q.correct);
+    button.classList.toggle('bad', index === selected && !ok);
+    button.disabled = true;
+  });
+  const feedback = ok ? '✅ Правильно!' : '💡 Верный ответ: ' + q.answers[q.correct];
+  $('feedback').textContent = q.listening ? feedback + ' · «' + q.word + '»' : feedback;
+  $('feedback').style.background = ok ? '#274b29' : '#4a3530';
+  $('check').textContent = 'ДАЛЕЕ';
+}
+
+function finish() {
+  $('lessonArt').classList.toggle('hide', reviewing);
+  $('pointsEarned').parentElement.classList.toggle('hide', reviewing);
+  $('correctAnswers').textContent = correct + '/' + questions.length;
+  if (reviewing) {
+    $('finishTitle').textContent = 'Повторение завершено';
+    $('finishText').textContent = 'Исправлено: ' + correct + '. Осталось заданий: ' + state.mistakes.length + '.';
+  } else {
+    $('lessonArt').src = 'lesson-cards/lesson-' + String(current + 1).padStart(3, '0') + '.jpg';
+    const win = correct >= 4 && qIndex >= questions.length;
+    if (win && !state.completed.includes(current)) state.completed.push(current);
+    const points = correct * 10;
+    state.xp += points;
+    const day = today();
+    if (state.lastDay !== day) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      state.streak = state.lastDay === dateKey(yesterday) ? state.streak + 1 : 1;
+      state.lastDay = day;
+    }
+    $('finishTitle').textContent = win ? 'Молодец! 🎉' : 'Попробуй ещё!';
+    $('finishText').textContent = win
+      ? 'Ты прошёл урок ' + (current + 1) + '. Продолжай в том же духе!'
+      : 'Чтобы открыть следующий урок, ответь правильно минимум на 4 из 5 вопросов.';
+    $('pointsEarned').textContent = '+' + points;
+  }
+  persist();
+  updateReviewButtons();
+  go('finish');
+}
+
+$('startReview').onclick = startReview;
+$('reviewFromFinish').onclick = startReview;
 $('exitQuiz').onclick=()=>go('home');$('check').onclick=advance;$('returnMap').onclick=()=>go('home');$('saveName').onclick=()=>{const n=$('nameInput').value.trim().slice(0,26);if(!n){alert('Введи имя ученика');return}state.name=n;persist();renderProfile();updateStats()};
 let trial = null;
 
