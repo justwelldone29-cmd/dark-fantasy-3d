@@ -34,6 +34,7 @@ const today = () => dateKey(new Date());
 let current = 0, qIndex = 0, selected = -1, checked = false, correct = 0, questions = [], hearts = 5;
 let activePage = 'home';
 let reviewing = false;
+let previewGroup = null;
 let activeAudio = null;
 
 function persist() {
@@ -89,10 +90,11 @@ function updateReviewButtons() {
   $('reviewFromFinish').classList.toggle('hide', count === 0);
 }
 
-function startQuiz(items, isReview) {
+function startQuiz(items, isReview, group = null) {
   trial = null;
   reviewing = isReview;
-  $('quizHearts').parentElement.classList.toggle('hide', reviewing);
+  previewGroup = group;
+  $('quizHearts').parentElement.classList.toggle('hide', reviewing || previewGroup !== null);
   questions = items;
   qIndex = 0;
   correct = 0;
@@ -114,6 +116,12 @@ function startReview() {
   if (items.length) startQuiz(items, true);
 }
 
+function startTrialListening(group) {
+  const second = Math.floor(vocab[group].length / 2);
+  const items = [0, second].map(index => makeQuestion(group, index, 'listen', group * 11 + index + 2));
+  startQuiz(items, false, group);
+}
+
 function question() {
   stopAudio();
   selected = -1;
@@ -122,7 +130,9 @@ function question() {
   if (q.listening) $('speechStatus').textContent = 'Нажми 🔊, чтобы услышать слово.';
   $('quizBar').style.width = (100 * qIndex / questions.length) + '%';
   $('quizHearts').textContent = hearts;
-  $('quizType').textContent = reviewing ? 'РАБОТА НАД ОШИБКАМИ · ' + q.type : q.type;
+  const label = reviewing ? 'РАБОТА НАД ОШИБКАМИ'
+    : previewGroup !== null ? 'ПРОБНЫЙ УРОК' : '';
+  $('quizType').textContent = label ? label + ' · ' + q.type : q.type;
   $('question').textContent = q.question;
   $('feedback').textContent = '';
   $('feedback').style.background = '';
@@ -146,7 +156,7 @@ function question() {
 function advance() {
   if (checked) {
     qIndex++;
-    if (qIndex < questions.length && (reviewing || hearts > 0)) question();
+    if (qIndex < questions.length && (reviewing || previewGroup !== null || hearts > 0)) question();
     else finish();
     return;
   }
@@ -158,7 +168,7 @@ function advance() {
     correct++;
     if (reviewing) state.mistakes = state.mistakes.filter(key => key !== q.key);
   } else {
-    if (!reviewing) hearts = Math.max(0, hearts - 1);
+    if (!reviewing && previewGroup === null) hearts = Math.max(0, hearts - 1);
     // Rotate missed review items to give the remaining queue a turn.
     state.mistakes = state.mistakes.filter(key => key !== q.key);
     state.mistakes.push(q.key);
@@ -177,10 +187,14 @@ function advance() {
 }
 
 function finish() {
-  $('lessonArt').classList.toggle('hide', reviewing);
-  $('pointsEarned').parentElement.classList.toggle('hide', reviewing);
+  const preview = previewGroup !== null;
+  $('lessonArt').classList.toggle('hide', reviewing || preview);
+  $('pointsEarned').parentElement.classList.toggle('hide', reviewing || preview);
   $('correctAnswers').textContent = correct + '/' + questions.length;
-  if (reviewing) {
+  if (preview) {
+    $('finishTitle').textContent = 'Пробный урок завершён';
+    $('finishText').textContent = 'Правильных ответов на слух: ' + correct + ' из ' + questions.length + '.';
+  } else if (reviewing) {
     $('finishTitle').textContent = 'Повторение завершено';
     $('finishText').textContent = 'Исправлено: ' + correct + '. Осталось заданий: ' + state.mistakes.length + '.';
   } else {
@@ -209,7 +223,7 @@ function finish() {
 
 $('startReview').onclick = startReview;
 $('reviewFromFinish').onclick = startReview;
-$('exitQuiz').onclick=()=>go('home');$('check').onclick=advance;$('returnMap').onclick=()=>go('home');$('saveName').onclick=()=>{const n=$('nameInput').value.trim().slice(0,26);if(!n){alert('Введи имя ученика');return}state.name=n;persist();renderProfile();updateStats()};
+$('exitQuiz').onclick=()=>go('home');$('check').onclick=advance;$('returnMap').onclick=()=>previewGroup === null ? go('home') : returnToLessons(previewGroup);$('saveName').onclick=()=>{const n=$('nameInput').value.trim().slice(0,26);if(!n){alert('Введи имя ученика');return}state.name=n;persist();renderProfile();updateStats()};
 let trial = null;
 
 function updateListen(playing, message) {
@@ -270,6 +284,7 @@ $('listen').onclick = () => {
 };
 
 function startTrial(group) {
+  previewGroup = null;
   trial = {group, index: 0};
   go('quiz');
   showTrialWord();
@@ -291,11 +306,12 @@ function showTrialWord() {
   $('feedback').textContent = '';
   $('feedback').style.background = '';
   $('check').disabled = false;
-  $('check').textContent = trial.index + 1 === items.length ? 'К ТЕСТАМ' : 'СЛЕДУЮЩЕЕ СЛОВО';
+  $('check').textContent = trial.index + 1 === items.length ? 'К АУДИРОВАНИЮ' : 'СЛЕДУЮЩЕЕ СЛОВО';
 }
 
 function returnToLessons(group) {
   trial = null;
+  previewGroup = null;
   go('home');
   document.querySelectorAll('.unit')[group].scrollIntoView({block: 'start'});
 }
@@ -307,12 +323,16 @@ function advanceOrStudy() {
     trial.index++;
     showTrialWord();
   } else {
-    returnToLessons(trial.group);
+    startTrialListening(trial.group);
   }
 }
 
 $('check').onclick = advanceOrStudy;
-$('exitQuiz').onclick = () => trial ? returnToLessons(trial.group) : go('home');
+$('exitQuiz').onclick = () => {
+  const group = trial ? trial.group : previewGroup;
+  if (group === null) go('home');
+  else returnToLessons(group);
+};
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) stopAudio();
