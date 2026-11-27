@@ -110,7 +110,7 @@ const assets = [
   "./lesson-cards/lesson-099.jpg",
   "./lesson-cards/lesson-100.jpg"
 ];
-const cacheName = 'kyryk-mary-v19';
+const cacheName = 'kyryk-mary-v20';
 const scope = self.registration.scope;
 const home = new URL('index.html', scope).href;
 const localAssets = new Set(assets.map(file => new URL(file, scope).href));
