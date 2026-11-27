@@ -1,10 +1,9 @@
 const assets = [
-  "./",
   "./index.html",
   "./app.js",
   "./voice-clips.js",
   "./install.js",
-  "./manifest.webmanifest",
+  "./manifest.json",
   "./mascot.jpg",
   "./icon.png",
   "./icon-180.png",

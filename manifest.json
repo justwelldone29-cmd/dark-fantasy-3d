@@ -1,9 +1,9 @@
 {
-  "id": "./",
+  "id": "./index.html",
   "name": "Кырык Мары — горномарийский",
   "short_name": "Кырык Мары",
   "lang": "ru",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0c1b1e",
