@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0c0a14">
+  <title>Брейнрот Раш</title>
+  <meta name="description" content="Побег из лаборатории с безумными героями. Уворачивайся, собирай чипы и открывай брейнротов.">
+  <link rel="icon" href="./assets/icon.png">
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./game.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <button class="brand" data-page="home" aria-label="Брейнрот Раш"><span class="brand-icon" data-icon="bolt"></span><span class="brand-name"><b data-i="brand1">БРЕЙНРОТ</b><b data-i="brand2">РАШ</b></span></button>
+      <nav aria-label="Разделы">
+        <button class="tab active" data-page="home"><i data-icon="game"></i><span data-i="race">Забег</span></button>
+        <button class="tab" data-page="garage"><i data-icon="face"></i><span data-i="garage">Коллекция</span></button>
+        <button class="tab" data-page="records"><i data-icon="trophy"></i><span data-i="records">Рекорды</span></button>
+      </nav>
+      <div class="utilities">
+        <button class="wallet" data-page="garage" data-label="coins"><i data-icon="coin"></i><span data-coins>0</span></button>
+        <button class="icon-button" id="sound" data-label="sound"><i data-icon="volume"></i></button>
+        <button class="icon-button full-button" id="fullscreen" data-label="full"><i data-icon="full"></i></button>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <section id="home" class="page">
+      <div class="hero">
+        <div class="hero-content">
+          <div class="eyebrow"><span></span><span data-i="arcade">ПОБЕГ ИЗ ЛАБОРАТОРИИ</span></div>
+          <h1><span data-i="brand1">БРЕЙНРОТ</span><em data-i="brand2">РАШ</em></h1>
+          <p data-i="pitch">Уворачивайся от ловушек, хватай чипы и открывай безумных брейнротов. Как далеко ты убежишь?</p>
+          <div class="actions">
+            <button class="primary" id="start"><i data-icon="play"></i><span data-i="start">Играть</span></button>
+            <button class="secondary" id="help"><i data-icon="game"></i><span data-i="help">Как играть</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="brief-grid">
+        <section class="panel">
+          <div class="tile-icon violet" data-icon="trophy"></div>
+          <div class="tile-text"><h2 data-i="best">Личный рекорд</h2><p><strong data-best>0</strong> <span class="unit" data-i="points">очков</span></p></div>
+          <button class="small-link" data-page="records" data-label="records"><i data-icon="arrow"></i></button>
+        </section>
+        <section class="panel">
+          <div class="tile-icon pink" data-icon="target"></div>
+          <div class="tile-text"><h2 data-i="goal">Задание дня</h2><p id="goal-title"></p><div class="progress"><span id="goal-progress"></span></div></div><div class="reward" id="goal-reward"><i data-icon="coin"></i>+50</div>
+        </section>
+        <section class="panel controls-panel">
+          <div class="tile-icon blue" data-icon="game"></div>
+          <div class="tile-text"><h2 data-i="controls">Управление</h2><p class="keyboard"><kbd>←</kbd><kbd>→</kbd><span data-i="steer">Движение</span><kbd>Space</kbd><span data-i="nitro">Рывок</span></p><p class="touch-tip" data-i="touch">Кнопки на экране</p></div>
+        </section>
+      </div>
+    </section>
+    <section id="garage" class="page" hidden>
+      <div class="page-heading"><h1 data-i="garage">Коллекция</h1><p data-i="garageTip">Собирай чипы и открывай новых брейнротов.</p></div>
+      <div class="car-grid" id="car-list"></div>
+    </section>
+    <section id="records" class="page" hidden>
+      <div class="page-heading"><h1 data-i="records">Рекорды</h1><p data-i="recordsTip">Твои лучшие забеги.</p></div>
+      <div class="result-list" id="record-list"></div>
+    </section>
+    <section id="track" class="page track" hidden>
+      <canvas id="road" aria-label="Лабораторный коридор"></canvas>
+      <div class="hud">
+        <div class="hud-block"><span data-i="score">СЧЁТ</span><b id="hud-score">0</b></div>
+        <div class="hud-block speed"><span data-i="speed">МЕТРЫ</span><b id="hud-speed">0</b></div>
+        <div class="hud-block"><span data-i="coins">ЧИПЫ</span><b id="hud-coins">0</b></div>
+        <button class="icon-button" id="pause" data-label="pause"><i data-icon="pause"></i></button>
+      </div>
+      <div class="countdown" id="countdown" hidden></div>
+      <div id="toast" aria-live="polite"></div>
+      <div class="track-bottom">
+        <div class="boost-meter"><span><i data-icon="bolt"></i><span data-i="nitro">Рывок</span></span><div><b id="boost-fill"></b></div></div>
+        <div class="drive-controls">
+          <button data-drive="left" data-label="left">←</button><button data-drive="right" data-label="right">→</button>
+          <button class="boost" data-drive="boost" data-label="nitro"><i data-icon="bolt"></i></button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="wrap footer"><span><span class="footer-pulse"></span> <span data-i="brand">Брейнрот Раш</span></span></footer>
+  <dialog id="modal">
+    <button id="close-dialog" class="icon-button close-dialog" data-label="close"><i data-icon="close"></i></button>
+    <div id="modal-body"></div>
+  </dialog>
+</body>
+</html>
