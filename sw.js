@@ -1,6 +1,10 @@
 const assets = [
   "./index.html",
   "./app.js",
+  "./extra-vocab.js",
+  "./speech-engine.js",
+  "./android-voice.js",
+  "./NorthEuraLex-LICENSE.txt",
   "./voice-clips.js",
   "./install.js",
   "./manifest.json",
@@ -110,7 +114,7 @@ const assets = [
   "./lesson-cards/lesson-099.jpg",
   "./lesson-cards/lesson-100.jpg"
 ];
-const cacheName = 'kyryk-mary-v22';
+const cacheName = 'kyryk-mary-v24';
 const scope = self.registration.scope;
 const home = new URL('index.html', scope).href;
 const localAssets = new Set(assets.map(file => new URL(file, scope).href));

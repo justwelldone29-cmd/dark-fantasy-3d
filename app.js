@@ -1,5 +1,17 @@
-const groups=[["Первое знакомство","👋","пуры кечӹ:Добрый день|тау:Спасибо|яжо:Хороший|у:Новый|мӹнь:Я|тӹнь:Ты|мӓ:Мы|лӹм:Имя"],["Числа","🔢","иктӹ:Один|кокты:Два|кымыт:Три|нӹлӹт:Четыре|вӹзӹт:Пять|кудыт:Шесть|шӹмӹт:Семь|кӓндӓкшӹ:Восемь|ӹндекшӹ:Девять|лу:Десять"],["Семья и люди","👨‍👩‍👧","ӓвӓ:Мама|ӓтя:Папа|папа:Бабушка|ӹдӹр:Дочь|ӹзӓ:Старший брат|эдем:Человек|лӹм:Имя|мӓ:Мы"],["Природа","🌳","вӹд:Вода|тыл:Огонь|кечӹ:Солнце|тӹлзӹ:Луна|шӹдӹр:Звезда|йыд:Ночь|юр:Дождь|лым:Снег|мардеж:Ветер|кырык:Гора"],["Животные","🐈","пи:Собака|коти:Кошка|кол:Рыба|кек:Птица|лӹпӹ:Бабочка|мӧскӓ:Медведь|имни:Лошадь|куку:Кукушка|цӓрӓгек:Летучая мышь|мыны:Яйцо"],["Цвета и качества","🎨","якшаргы:Красный|ошы:Белый|шим:Чёрный|ыжар:Зелёный|симсӹ:Бирюзовый, синий|яжо:Хороший|у:Новый"],["Дом и вещи","🏠","пӧрт:Дом|книгӓ:Книга|арава:Телега|кӹртни:Железо|парсын:Шёлк|компьютер:Компьютер|кӱ:Камень|рок:Земля"],["Еда и напитки","🍯","шӹшер:Молоко|мӱ:Мёд|санзал:Соль|чӓй:Чай|кофе:Кофе|сакыр:Сахар|роколма:Картофель|рис:Рис|шоколад:Шоколад|апельсин:Апельсин"],["Человек и тело","👁️","вуй:Голова|сӹнзӓ:Глаз|пӹлӹш:Ухо|нер:Нос|ышма:Рот|пӱ:Зуб|йӹлмӹ:Язык|кид:Рука|шӱм:Сердце|лу:Кость"],["Действия и время","⏰","качкаш:Есть|йӱӓш:Пить|амалаш:Спать|тенгечӹ:Вчера|иргодым:Завтра|шачмы:Понедельник|шанавӹл:Радуга|хӹдӹртӹш:Гром"]];
-const lessons=Array.from({length:100},(_,id)=>({id,group:Math.floor(id/10),round:id%10}));const vocab=groups.map(g=>g[2].split('|').map(pair=>pair.split(':')));
+const originalGroups=[["Первое знакомство","👋","пуры кечӹ:Добрый день|тау:Спасибо|яжо:Хороший|у:Новый|мӹнь:Я|тӹнь:Ты|мӓ:Мы|лӹм:Имя"],["Числа","🔢","иктӹ:Один|кокты:Два|кымыт:Три|нӹлӹт:Четыре|вӹзӹт:Пять|кудыт:Шесть|шӹмӹт:Семь|кӓндӓкшӹ:Восемь|ӹндекшӹ:Девять|лу:Десять"],["Семья и люди","👨‍👩‍👧","ӓвӓ:Мама|ӓтя:Папа|папа:Бабушка|ӹдӹр:Дочь|ӹзӓ:Старший брат|эдем:Человек|лӹм:Имя|мӓ:Мы"],["Природа","🌳","вӹд:Вода|тыл:Огонь|кечӹ:Солнце|тӹлзӹ:Луна|шӹдӹр:Звезда|йыд:Ночь|юр:Дождь|лым:Снег|мардеж:Ветер|кырык:Гора"],["Животные","🐈","пи:Собака|коти:Кошка|кол:Рыба|кек:Птица|лӹпӹ:Бабочка|мӧскӓ:Медведь|имни:Лошадь|куку:Кукушка|цӓрӓгек:Летучая мышь|мыны:Яйцо"],["Цвета и качества","🎨","якшаргы:Красный|ошы:Белый|шим:Чёрный|ыжар:Зелёный|симсӹ:Бирюзовый, синий|яжо:Хороший|у:Новый"],["Дом и вещи","🏠","пӧрт:Дом|книгӓ:Книга|арава:Телега|кӹртни:Железо|парсын:Шёлк|компьютер:Компьютер|кӱ:Камень|рок:Земля"],["Еда и напитки","🍯","шӹшер:Молоко|мӱ:Мёд|санзал:Соль|чӓй:Чай|кофе:Кофе|сакыр:Сахар|роколма:Картофель|рис:Рис|шоколад:Шоколад|апельсин:Апельсин"],["Человек и тело","👁️","вуй:Голова|сӹнзӓ:Глаз|пӹлӹш:Ухо|нер:Нос|ышма:Рот|пӱ:Зуб|йӹлмӹ:Язык|кид:Рука|шӱм:Сердце|лу:Кость"],["Действия и время","⏰","качкаш:Есть|йӱӓш:Пить|амалаш:Спать|тенгечӹ:Вчера|иргодым:Завтра|шачмы:Понедельник|шанавӹл:Радуга|хӹдӹртӹш:Гром"]];
+const groups = [
+  ...originalGroups.map(([title, icon, entries]) => [title, icon, entries.split('|').map(entry => entry.split(':'))]),
+  ...extraGroups
+];
+const vocab = groups.map(group => group[2]);
+const vocabularySize = new Set(vocab.flatMap(items => items.map(pair => pair[0]))).size;
+let nextLessonId = 0;
+const lessonsByGroup = vocab.map((items, group) => {
+  const count = group < originalGroups.length ? 10 : Math.ceil(items.length / 3);
+  return Array.from({length: count}, (_, round) => ({id: nextLessonId++, group, round}));
+});
+const lessons = lessonsByGroup.flat();
+const illustratedLessons = originalGroups.length * 10;
 const KEY = 'kyryk_mary_v1';
 const defaultState = {name: '', completed: [], xp: 0, streak: 0, lastDay: '', hearts: 5};
 function loadState() {
@@ -15,7 +27,7 @@ const saved = loadState();
 const completed = Array.isArray(saved.completed) ? saved.completed : [];
 const savedMistakes = Array.isArray(saved.mistakes) ? saved.mistakes : [];
 const validMistakes = savedMistakes.filter(key => {
-  if (typeof key !== 'string' || !/^\d:\d:(listen|mari|translate)$/.test(key)) return false;
+  if (typeof key !== 'string' || !/^\d+:\d+:(listen|mari|translate|write|tiles|pairs)$/.test(key)) return false;
   const [group, index] = key.split(':').map(Number);
   return Boolean(vocab[group] && vocab[group][index]);
 });
@@ -35,6 +47,8 @@ let current = 0, qIndex = 0, selected = -1, checked = false, correct = 0, questi
 let activePage = 'home';
 let reviewing = false;
 let previewGroup = null;
+let topicPractice = false;
+let readExercise = null;
 let activeAudio = null;
 
 function persist() {
@@ -42,12 +56,104 @@ function persist() {
 }
 function updateStats(){$('statXp').textContent=state.xp;$('statStreak').textContent=state.streak;$('statHearts').textContent=5;$('welcomeName').textContent=state.name||'друг';}
 function go(id){if(id!=='quiz')stopAudio();activePage=id;['home','quiz','finish','themes','profile'].forEach(v=>$(v).classList.toggle('hide',v!==id));$('nav').classList.toggle('hide',id==='quiz'||id==='finish');$('header').classList.toggle('hide',id==='quiz'||id==='finish');document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id==='home')renderMap();if(id==='themes')renderThemes();if(id==='profile')renderProfile();window.scrollTo(0,0)}
-function renderMap(){updateStats();updateReviewButtons();const done=new Set(state.completed),next=lessons.findIndex(v=>!done.has(v.id));$('mapUnits').innerHTML='';for(let g=0;g<groups.length;g++){const group=groups[g],n=Array.from({length:10},(_,k)=>g*10+k).filter(id=>done.has(id)).length,div=document.createElement('div');div.innerHTML=`<div class="unit"><div style="flex:1"><div class="eyebrow">МОДУЛЬ ${g+1}, РАЗДЕЛ ${g+1}</div><h1>${group[0]}</h1><p>${n} ИЗ 10 УРОКОВ</p><div class="track"><span style="width:${n*10}%"></span></div></div><span class="book">${group[1]}</span></div>`;const trialButton=document.createElement('button');trialButton.type='button';trialButton.className='trialButton';trialButton.textContent='Пробный урок';trialButton.setAttribute('aria-label','Пробный урок: '+group[0]);trialButton.onclick=()=>startTrial(g);div.querySelector('.unit > div').appendChild(trialButton);const path=document.createElement('div');path.className='path';for(let k=0;k<10;k++){const id=g*10+k,doneLesson=done.has(id),unlocked=doneLesson||id===next,wrap=document.createElement('div'),button=document.createElement('button'),shift=Math.round(Math.sin(k*1.3+.4)*75);wrap.className='nodeRow';wrap.style.setProperty('--shift',shift+'px');button.className='node '+(doneLesson?'done':unlocked?'open':k===7?'chest':'');button.style.setProperty('--shift',shift+'px');button.disabled=!unlocked;button.textContent=doneLesson?'★':unlocked?(k%4===0?'★':'📖'):k===7?'🎁':'★';button.setAttribute('aria-label',`Урок ${id+1}${unlocked?'':', заблокирован'}`);button.onclick=()=>start(id);wrap.appendChild(button);if(unlocked&&!doneLesson){const label=document.createElement('span');label.className='bubble';label.textContent='УРОК '+(id+1);wrap.appendChild(label)}if(doneLesson){const label=document.createElement('span');label.className='nodeCaption';label.textContent='ПРОЙДЕНО';wrap.appendChild(label)}path.appendChild(wrap)}div.appendChild(path);$('mapUnits').appendChild(div)}}
-function renderThemes(){$('unitsOverview').innerHTML='';groups.forEach((g,i)=>{const b=document.createElement('button');b.className='miniUnit';let count=state.completed.filter(n=>Math.floor(n/10)===i).length;b.innerHTML=`<span>${g[1]}</span>${g[0]}<small>${count}/10 уроков</small>`;b.onclick=()=>{go('home');document.querySelectorAll('.unit')[i].scrollIntoView({block:'start',behavior:'smooth'})};$('unitsOverview').appendChild(b)})}
+function renderMap() {
+  updateStats();
+  updateReviewButtons();
+  $('courseSize').textContent = vocabularySize.toLocaleString('ru-RU') + ' слов и фраз';
+  const completed = new Set(state.completed);
+  const next = lessons.find(lesson => !completed.has(lesson.id));
+  const map = $('mapUnits');
+  map.textContent = '';
+  for (const [group, [title, icon]] of groups.entries()) {
+    const units = lessonsByGroup[group];
+    const count = units.filter(lesson => completed.has(lesson.id)).length;
+    const section = document.createElement('div');
+    section.innerHTML = `<div class="unit"><div style="flex:1"><div class="eyebrow">МОДУЛЬ ${group + 1}</div><h1></h1><p>${count} ИЗ ${units.length} УРОКОВ</p><div class="track"><span style="width:${100 * count / units.length}%"></span></div></div><span class="book"></span></div>`;
+    section.querySelector('.unit h1').textContent = title;
+    section.querySelector('.book').textContent = icon;
+    for (const [label, open] of [['Пробный урок', startTrial], ['Тренировка', startTopicPractice]]) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'trialButton';
+      button.textContent = label;
+      button.setAttribute('aria-label', label + ': ' + title);
+      button.onclick = () => open(group);
+      section.querySelector('.unit > div').appendChild(button);
+    }
+    const path = document.createElement('div');
+    path.className = 'path';
+    for (const lesson of units) {
+      const {id, round} = lesson;
+      const done = completed.has(id);
+      const unlocked = done || next?.id === id;
+      const row = document.createElement('div');
+      row.className = 'nodeRow';
+      const shift = Math.round(Math.sin(round * 1.3 + 0.4) * 75) + 'px';
+      row.style.setProperty('--shift', shift);
+      const button = document.createElement('button');
+      button.className = 'node ' + (done ? 'done' : unlocked ? 'open' : round === 7 ? 'chest' : '');
+      button.style.setProperty('--shift', shift);
+      button.disabled = !unlocked;
+      button.textContent = done ? '★' : unlocked && round % 4 !== 0 ? '📖' : !unlocked && round === 7 ? '🎁' : '★';
+      button.setAttribute('aria-label', 'Урок ' + (id + 1) + (unlocked ? '' : ', заблокирован'));
+      button.onclick = () => start(id);
+      row.appendChild(button);
+      if (unlocked) {
+        const label = document.createElement('span');
+        label.className = done ? 'nodeCaption' : 'bubble';
+        label.textContent = done ? 'ПРОЙДЕНО' : 'УРОК ' + (id + 1);
+        row.appendChild(label);
+      }
+      path.appendChild(row);
+    }
+    section.appendChild(path);
+    map.appendChild(section);
+  }
+}
+
+function renderThemes() {
+  const overview = $('unitsOverview');
+  const completed = new Set(state.completed);
+  overview.textContent = '';
+  groups.forEach(([title, icon], group) => {
+    const lessons = lessonsByGroup[group];
+    const count = lessons.filter(lesson => completed.has(lesson.id)).length;
+    const button = document.createElement('button');
+    button.className = 'miniUnit';
+    button.innerHTML = '<span></span><b></b><small></small>';
+    button.querySelector('span').textContent = icon;
+    button.querySelector('b').textContent = title;
+    button.querySelector('small').textContent = count + '/' + lessons.length + ' уроков · ' + vocab[group].length + ' слов';
+    button.onclick = () => {
+      go('home');
+      document.querySelectorAll('.unit')[group].scrollIntoView({block: 'start', behavior: 'smooth'});
+    };
+    overview.appendChild(button);
+  });
+}
 function renderProfile(){$('profileName').textContent=state.name||'Гость';$('nameInput').value=state.name||'';$('profileXp').textContent=state.xp;$('profileCount').textContent=state.completed.length;$('profileStreak').textContent=state.streak;}
 function makeQuestion(group, index, mode, seed) {
   const items = vocab[group];
   const [word, translation] = items[index];
+  const key = [group, index, mode].join(':');
+  if (mode === 'write') {
+    return {key, word, mode, answer: translation, type: 'ВВОД ОТВЕТА', question: 'Напиши перевод слова «' + word + '»'};
+  }
+  if (mode === 'tiles') {
+    return {key, word, mode, answer: word, type: 'СБОРКА ОТВЕТА', question: 'Собери по-горномарийски «' + translation + '»'};
+  }
+  if (mode === 'pairs') {
+    const pairs = [];
+    const alternatives = new Set();
+    for (let step = 0; step < items.length && pairs.length < 3; step++) {
+      const pair = items[(index + step) % items.length];
+      if (alternatives.has(pair[1])) continue;
+      alternatives.add(pair[1]);
+      pairs.push(pair);
+    }
+    return {key, word, mode, pairs, answer: pairs.map(pair => pair.join(' — ')).join(' · '),
+      type: 'ПАРЫ СЛОВ', question: 'Подбери перевод к каждому слову'};
+  }
   const reverse = mode === 'mari';
   const listening = mode === 'listen';
   const answer = reverse ? word : translation;
@@ -64,7 +170,7 @@ function makeQuestion(group, index, mode, seed) {
     [answers[position], answers[swap]] = [answers[swap], answers[position]];
   }
   return {
-    key: [group, index, mode].join(':'),
+    key, mode,
     word, listening, answers,
     correct: answers.indexOf(answer),
     question: listening ? 'Послушай и выбери перевод' : reverse
@@ -78,7 +184,8 @@ function questionsFor(id) {
   const {group, round} = lessons[id];
   return Array.from({length: 5}, (_, step) => {
     const index = (round * 3 + step) % vocab[group].length;
-    const mode = step === 2 || step === 4 ? 'listen' : (step + round) % 2 === 1 ? 'mari' : 'translate';
+    const mode = ['translate', round % 2 === 0 ? 'mari' : 'write', 'listen',
+      round % 3 === 0 ? 'tiles' : 'pairs', round % 2 === 0 ? 'write' : 'listen'][step];
     return makeQuestion(group, index, mode, id * 5 + step);
   });
 }
@@ -90,9 +197,10 @@ function updateReviewButtons() {
   $('reviewFromFinish').classList.toggle('hide', count === 0);
 }
 
-function startQuiz(items, isReview, group = null) {
+function startQuiz(items, isReview, group = null, practice = false) {
   trial = null;
   reviewing = isReview;
+  topicPractice = practice;
   previewGroup = group;
   $('quizHearts').parentElement.classList.toggle('hide', reviewing || previewGroup !== null);
   questions = items;
@@ -122,6 +230,100 @@ function startTrialListening(group) {
   startQuiz(items, false, group);
 }
 
+function normalizeTranslation(value) {
+  return value.normalize('NFC').trim().toLowerCase().replace(/ё/g, 'е')
+    .replace(/[.!?]+$/u, '').trim().replace(/\s+/gu, ' ');
+}
+
+function renderWritten(q) {
+  const field = document.createElement('input');
+  field.id = 'writtenAnswer';
+  field.className = 'field';
+  field.placeholder = 'Напиши перевод';
+  field.setAttribute('aria-label', 'Перевод на русский');
+  field.autocomplete = 'off';
+  field.maxLength = 120;
+  field.oninput = () => { $('check').disabled = !field.value.trim(); };
+  field.onkeydown = event => {
+    if (event.key === 'Enter' && !$('check').disabled && !checked && !event.isComposing) {
+      event.preventDefault();
+      field.blur();
+      advance();
+    }
+  };
+  $('answers').appendChild(field);
+  const accepted = [q.answer, ...q.answer.split(',')].map(normalizeTranslation);
+  return () => accepted.includes(normalizeTranslation(field.value));
+}
+
+function renderTiles(q) {
+  const phrase = q.word.includes(' ');
+  const pieces = phrase ? q.word.split(' ') : Array.from(q.word);
+  const order = pieces.map((_, i) => i).reverse();
+  const line = document.createElement('div');
+  line.className = 'tileRow';
+  line.setAttribute('aria-label', 'Твой ответ');
+  const bank = document.createElement('div');
+  bank.className = 'tileRow';
+  bank.setAttribute('aria-label', 'Доступные части');
+  const selectedPieces = [];
+  const makeTile = text => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'answer tile';
+    button.textContent = text;
+    return button;
+  };
+  for (const position of order) {
+    const original = makeTile(pieces[position]);
+    original.onclick = () => {
+      if (checked || original.disabled) return;
+      original.disabled = true;
+      selectedPieces.push(position);
+      const selectedTile = makeTile(pieces[position]);
+      selectedTile.onclick = () => {
+        if (checked) return;
+        selectedPieces.splice(selectedPieces.indexOf(position), 1);
+        original.disabled = false;
+        selectedTile.remove();
+        $('check').disabled = true;
+      };
+      line.appendChild(selectedTile);
+      $('check').disabled = selectedPieces.length !== pieces.length;
+    };
+    bank.appendChild(original);
+  }
+  $('answers').append(line, bank);
+  return () => selectedPieces.map(i => pieces[i]).join(phrase ? ' ' : '') === q.word;
+}
+
+function renderPairs(q) {
+  const options = q.pairs.map(pair => pair[1]).reverse();
+  const fields = q.pairs.map(([word]) => {
+    const row = document.createElement('label');
+    row.className = 'pairRow';
+    const name = document.createElement('span');
+    name.textContent = word;
+    const select = document.createElement('select');
+    select.className = 'field';
+    select.appendChild(new Option('Выбери перевод', ''));
+    options.forEach(option => select.appendChild(new Option(option, option)));
+    select.onchange = () => {
+      $('check').disabled = !fields.every(field => field.value);
+    };
+    row.append(name, select);
+    $('answers').appendChild(row);
+    return select;
+  });
+  return () => fields.every((field, i) => field.value === q.pairs[i][1]);
+}
+
+function startTopicPractice(group) {
+  const modes = ['listen', 'write', 'tiles', 'pairs', 'mari'];
+  const items = modes.map((mode, index) => makeQuestion(group, index === 2 && group === 0 ? 0 : index, mode, group * 7 + index));
+  startQuiz(items, false, group, true);
+}
+
 function question() {
   stopAudio();
   selected = -1;
@@ -131,12 +333,19 @@ function question() {
   $('quizBar').style.width = (100 * qIndex / questions.length) + '%';
   $('quizHearts').textContent = hearts;
   const label = reviewing ? 'РАБОТА НАД ОШИБКАМИ'
-    : previewGroup !== null ? 'ПРОБНЫЙ УРОК' : '';
+    : topicPractice ? 'ТРЕНИРОВКА' : previewGroup !== null ? 'ПРОБНЫЙ УРОК' : '';
   $('quizType').textContent = label ? label + ' · ' + q.type : q.type;
   $('question').textContent = q.question;
   $('feedback').textContent = '';
   $('feedback').style.background = '';
   $('answers').textContent = '';
+  $('check').disabled = true;
+  $('check').textContent = 'ПРОВЕРИТЬ';
+  const renderer = {write: renderWritten, tiles: renderTiles, pairs: renderPairs}[q.mode];
+  $('audioControls').classList.toggle('hide', q.mode === 'pairs');
+  $('speechStatus').classList.toggle('hide', q.mode === 'pairs');
+  readExercise = renderer ? renderer(q) : null;
+  if (readExercise) return;
   q.answers.forEach((answer, index) => {
     const button = document.createElement('button');
     button.className = 'answer';
@@ -160,10 +369,10 @@ function advance() {
     else finish();
     return;
   }
-  if (selected < 0) return;
+  if ($('check').disabled || (!readExercise && selected < 0)) return;
   checked = true;
   const q = questions[qIndex];
-  const ok = selected === q.correct;
+  const ok = readExercise ? readExercise() : selected === q.correct;
   if (ok) {
     correct++;
     if (reviewing) state.mistakes = state.mistakes.filter(key => key !== q.key);
@@ -175,12 +384,13 @@ function advance() {
   }
   persist();
   $('quizHearts').textContent = hearts;
-  [...$('answers').children].forEach((button, index) => {
+  if (readExercise) $('answers').querySelectorAll('button, input, select').forEach(control => { control.disabled = true; });
+  else [...$('answers').children].forEach((button, index) => {
     button.classList.toggle('good', index === q.correct);
     button.classList.toggle('bad', index === selected && !ok);
     button.disabled = true;
   });
-  const feedback = ok ? '✅ Правильно!' : '💡 Верный ответ: ' + q.answers[q.correct];
+  const feedback = ok ? '✅ Правильно!' : '💡 Верный ответ: ' + (readExercise ? q.answer : q.answers[q.correct]);
   $('feedback').textContent = q.listening ? feedback + ' · «' + q.word + '»' : feedback;
   $('feedback').style.background = ok ? '#274b29' : '#4a3530';
   $('check').textContent = 'ДАЛЕЕ';
@@ -188,17 +398,18 @@ function advance() {
 
 function finish() {
   const preview = previewGroup !== null;
-  $('lessonArt').classList.toggle('hide', reviewing || preview);
+  const hasArtwork = !reviewing && !preview && current < illustratedLessons;
+  $('lessonArt').classList.toggle('hide', !hasArtwork);
   $('pointsEarned').parentElement.classList.toggle('hide', reviewing || preview);
   $('correctAnswers').textContent = correct + '/' + questions.length;
   if (preview) {
-    $('finishTitle').textContent = 'Пробный урок завершён';
-    $('finishText').textContent = 'Правильных ответов на слух: ' + correct + ' из ' + questions.length + '.';
+    $('finishTitle').textContent = topicPractice ? 'Тренировка завершена' : 'Пробный урок завершён';
+    $('finishText').textContent = (topicPractice ? 'Правильных ответов: ' : 'Правильных ответов на слух: ') + correct + ' из ' + questions.length + '.';
   } else if (reviewing) {
     $('finishTitle').textContent = 'Повторение завершено';
     $('finishText').textContent = 'Исправлено: ' + correct + '. Осталось заданий: ' + state.mistakes.length + '.';
   } else {
-    $('lessonArt').src = 'lesson-cards/lesson-' + String(current + 1).padStart(3, '0') + '.jpg';
+    if (hasArtwork) $('lessonArt').src = 'lesson-cards/lesson-' + String(current + 1).padStart(3, '0') + '.jpg';
     const win = correct >= 4 && qIndex >= questions.length;
     if (win && !state.completed.includes(current)) state.completed.push(current);
     const points = correct * 10;
@@ -254,13 +465,17 @@ $('listen').onclick = () => {
     return;
   }
   const word = trial ? vocab[trial.group][trial.index][0] : questions[qIndex].word;
-  const clip = Object.prototype.hasOwnProperty.call(window.KyrykVoiceClips, word) && window.KyrykVoiceClips[word];
-  if (!clip) {
-    updateListen(false, 'Для этого слова нет озвучки.');
+  const recorded = Object.prototype.hasOwnProperty.call(window.KyrykVoiceClips, word)
+    && window.KyrykVoiceClips[word];
+  let url;
+  try {
+    const data = recorded || window.KyrykVoice.synthesize(word);
+    const bytes = Uint8Array.from(atob(data), char => char.charCodeAt(0));
+    url = URL.createObjectURL(new Blob([bytes], {type: recorded ? 'audio/mpeg' : 'audio/wav'}));
+  } catch {
+    updateListen(false, 'Не удалось подготовить озвучку. Нажми «Слушать» ещё раз.');
     return;
   }
-  const bytes = Uint8Array.from(atob(clip), char => char.charCodeAt(0));
-  const url = URL.createObjectURL(new Blob([bytes], {type: 'audio/mpeg'}));
   const player = new Audio(url);
   const playback = {audio: player, url};
   activeAudio = playback;
@@ -292,6 +507,8 @@ function startTrial(group) {
 
 function showTrialWord() {
   stopAudio();
+  $('audioControls').classList.remove('hide');
+  $('speechStatus').classList.remove('hide');
   const items = vocab[trial.group];
   const [word, translation] = items[trial.index];
   $('quizBar').style.width = ((trial.index + 1) * 100 / items.length) + '%';
